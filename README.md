@@ -1,6 +1,6 @@
 # strava_api
 
-This is a very doirty code to connect to strava API to collect my info (the goal will be to compute additional statistic from these raw data) 
+This is a very dirty code to connect to strava API to collect my info (the goal will be to compute additional statistic from these raw data) 
 
 - first we need to generate a token
 
