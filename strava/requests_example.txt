@@ -1,0 +1,1 @@
+echo "$(sqlite3 strava.db 'select SUM(elevation) from segment_efforts where start_date_local like "2022-%" AND average_rate > 9;')/$ echo "(sqlite3 strava.db 'select SUM(moving_time) from segment_efforts where start_date_local like "2022-%" AND average_rate > 9 ;')*3600"|bc -l 
