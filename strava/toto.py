@@ -5,9 +5,9 @@ import json
 response = requests.post(
                     url = 'https://www.strava.com/oauth/token',
                     data = {
-                            'client_id': 33645,
-                            'client_secret': '00889cefb82d93f0bab5241b6adcfbcf75625ffb',
-                            'code': '95e899473f4c9ce721031c2f5e484f2cac104f9a',
+                            'client_id': <your client_id>,
+                            'client_secret': '<your_client_secret>',
+                            'code': '<teh code you get in web browser>',
                             'grant_type': 'authorization_code'
                             }
                 )
