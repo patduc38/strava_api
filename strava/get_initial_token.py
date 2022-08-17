@@ -7,7 +7,7 @@ response = requests.post(
                     data = {
                             'client_id': <your client_id>,
                             'client_secret': '<your_client_secret>',
-                            'code': '<teh code you get in web browser>',
+                            'code': '<the_code_you_get_in_your_browser>',
                             'grant_type': 'authorization_code'
                             }
                 )
