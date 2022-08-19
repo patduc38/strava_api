@@ -8,12 +8,13 @@ Enter the following URL in your browser
 
 http://www.strava.com/oauth/authorize?client_id=[REPLACE_WITH_YOUR_CLIENT_ID]&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=profile:read_all,activity:read_all
 
-you will be redirected to strava auth site, click on authorize. Then you are redirected to a localhost url hich can't be reach, but anyway, the important information is in the url. Copy the code in the get_initial_token.py , you will also have to replace your client id in that file. 
+you will be redirected to strava auth site, click on authorize. Then you are redirected to a localhost url which can't be reached, but anyway, the important information is in the url. Copy the code in the get_initial_token.py , you will also have to replace your client id and client secretin that file (see image below) .
+
 
 ![image](https://user-images.githubusercontent.com/16572059/185616908-a010eec9-af54-44b1-b247-64294650362c.png)
 
 
-Note:  you can get your client id get from strava : https://www.strava.com/settings/api
+Note:  you can get your client id and secret from strava : https://www.strava.com/settings/api
 
 Then run 
 
