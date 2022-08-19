@@ -10,6 +10,9 @@ http://www.strava.com/oauth/authorize?client_id=[REPLACE_WITH_YOUR_CLIENT_ID]&re
 
 you will be redirected to strava auth site, click on authorize. Then you are redirected to a localhost url hich can't be reach, but anyway, the important information is in the url. Copy the code in the get_initial_token.py , you will also have to replace your client id in that file. 
 
+![image](https://user-images.githubusercontent.com/16572059/185616908-a010eec9-af54-44b1-b247-64294650362c.png)
+
+
 Note:  you can get your client id get from strava : https://www.strava.com/settings/api
 
 Then run 
