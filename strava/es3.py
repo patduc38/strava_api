@@ -10,6 +10,10 @@ with open('strava_tokens.json') as json_file:
 # Loop through all activities
 url = "https://www.strava.com/api/v3/activities/"
 access_token = strava_tokens['access_token']
-# Get first page of activities from Strava with all fields
-ga.gse("7509204661")
+la=ga.readLastActivity()
+print(la)
+
+ga.updateLastActivity(int(la)+1)
+la=ga.readLastActivity()
+print(la)
     

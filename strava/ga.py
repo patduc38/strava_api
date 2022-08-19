@@ -5,6 +5,38 @@ import  pandas
 import csv
 import sqlite3
 
+# get Last activity
+def readLastActivity():
+    #connection to sqlite db strava.db
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor()
+    la=0
+
+    try:
+        st="SELECT value  FROM settings WHERE key =  'last_activity' ;"
+        cur.execute(st)
+        rows = cur.fetchall()
+        la=rows[0][0]
+    except KeyError as e :
+         print("key error encountered or e=",e)
+    con.close()
+    return la
+
+# Update Last activity
+def updateLastActivity(val):
+    #connection to sqlite db strava.db
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor()
+
+    try:
+        st="UPDATE settings SET value = " + str(val) + " WHERE key='last_activity';"
+        cur.execute(st)
+        con.commit()
+    except KeyError as e :
+         print("key error encountered or e=",e)
+    con.close()
+
+
 def addsegment(id):
     with open('strava_tokens.json') as json_file:
             strava_tokens = json.load(json_file)
