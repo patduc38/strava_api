@@ -4,11 +4,26 @@ This is a very dirty code to connect to strava API to collect my info (the goal 
 
 - first we need to generate a token
 
-edit retrieve.py and copy your strava client_secret you get from strava : https://www.strava.com/settings/api, then run 
+Enter the following URL in your browser
+
+http://www.strava.com/oauth/authorize?client_id=[REPLACE_WITH_YOUR_CLIENT_ID]&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=profile:read_all,activity:read_all
+
+you will be redirected to strava auth site, click on authorize. Then you are redirected to a localhost url hich can't be reach, but anyway, the important information is in the url. Copy the code in the get_initial_token.py , you will also have to replace your client id in that file. 
+
+Note:  you can get your client id get from strava : https://www.strava.com/settings/api
+
+Then run 
+
+python get_initial_token.py 
+
+it will generate strava_tokens.json file that will be used to access the url 
+
+- regenerate token on expiration 
+
+the token is available only for a few minutes, then  you need to regenerate *strava_tokens.json* :
 
 python retireve.py 
 
-it will generate a token_file *strava_tokens.json*
 
 - then you can display all your activities id 
 
