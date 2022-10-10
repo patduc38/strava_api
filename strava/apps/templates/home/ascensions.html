@@ -1,0 +1,278 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<script>                                
+    function reload_filtered_page() {
+        var text = document.getElementById('search-segment').value;      
+        starred=document.getElementById('starred').checked
+        var iframe = document.getElementById( "listframe" );
+        iframe.src = "/list?pattern="+text+"&starred="+starred+"&mode=like";
+    }
+
+    function updateShortcut() {
+        da=new Date()
+        dor=2017
+        var cblist=[]
+        for (var i=dor; i<=da.getFullYear();i++ ){
+            cb=document.getElementById("year"+i)
+            cb.checked=false            
+        }
+    }
+
+    function updateEndMin() {
+        updateShortcut()
+        var debd=document.getElementById('start')
+        if (debd.value == '') {
+            debd.value =''
+            return
+        }
+
+        var d=new Date(debd.value)
+        var min=new Date(debd.min)
+        var max=new Date(debd.max)
+        if (d < min) {
+            alert("Specified that is lower than minimum allowed date: "+min)
+            debd.value=''
+            return
+        } 
+        if (d > max) {
+            alert("Specified that is lower than maximum allowed date: "+max)
+            debd.value=''
+            return
+        } 
+        
+        document.getElementById('end').min=debd
+        
+    }
+
+    function updateStartMax() {
+        updateShortcut()
+        var endd=document.getElementById('end') 
+        if (endd.value == '') {
+            endd.value =''
+            return
+        }
+        var d=new Date(endd.value)
+        var min=new Date(endd.min)
+        var max=new Date(endd.max)
+        if (d < min) {
+            alert("Specified that is lower than minimum allowed date: "+min)
+            endd.value=''
+            return
+        } 
+        if (d > max) {
+            alert("Specified that is lower than maximum allowed date: "+max)
+            endd.value=''
+            return
+        } 
+        
+        document.getElementById('start').max=endd
+    }
+</script>
+
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card bg-yellow-100 border-0 shadow">
+                <div class="card-header d-sm-flex flex-row align-items-center flex-0">
+                    <div class="d-block mb-3 mb-sm-0">
+                        <div class="fs-5 fw-normal mb-2" id="segment-name"></div>
+                        <div class="small mt-2"> 
+                            <span class="fw-normal me-2">Best</span>                              
+                            <span class="text-success fw-bold" id="best-time"></span>
+                            <span class="fw-normal me-2">&nbsp;&nbsp; Worst</span>                              
+                            <span class="text-danger fw-bold" id="worst-time"></span>
+                            <span id="hidden-sid" style="visibility: hidden">5855232</span>
+                        </div>
+                    </div>
+                    <div class="d-block ms-auto">
+                        <label for="start">Start date:</label>
+                        <input type="date" id="start" name="start"
+                            value=""
+                            min="2017-01-01" max=""
+                            onBlur="updateEndMin();">
+
+                        <label for="end" style="margin: 0px 0px 0px 20px;">End date: </label>
+                        <input type="date" id="end" name="end"
+                                value=""
+                                min="2017-01-01"
+                                onBlur="updateStartMax(); ">
+                        <button type="submit"  id="button" onclick="updateSegmentInfo()">filter</button>
+                        <div class="small mt-2" id="year_shortcut"></div>
+
+                    </div>
+
+                </div>
+                <iframe  src=about:blank  id="graphframe" name="graphframe" height="470px" width="100%" title="Graph frame"></iframe>
+            </div>
+        </div>
+    
+    <div class="row">
+        <div class="col-12 col-xl-8">
+            <div class="row">
+                <div class="col-12 mb-2">
+                    <div class="card border-0 shadow">
+                        <div class="card-header">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h2 class="fs-5 fw-bold mb-0">Explorateur</h2>
+                                </div>
+                                <div class="col text-end">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="search-segment" placeholder="Search" aria-label="Search">
+                                        <span class="input-group-text" id="basic-addon2">
+                                            <button class="btn btn-sm btn-primary" type="button" onclick="reload_filtered_page();   return false;"> <svg class="icon icon-xs text-white-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" ></path></svg></button>                                              
+                                        </span>
+                                        <span> </span>&nbsp;&nbsp;</span><input type="checkbox" class="star" id="starred" name="starred">
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        <iframe  src="about:blank" id="listframe" name="listframe" height="290px" width="100%" title="list frame"></iframe>
+                    </div>
+                </div>
+
+                <script>
+                    starred="{{starred|safe}}"
+                    pattern="{{pattern|safe}}"
+                    mode="{{mode|safe}}"
+                    
+                    var iframe = document.getElementById( "listframe" )
+                    iframe.src = "/list?pattern="+pattern+"&starred="+starred+"&mode="+mode
+                </script>
+            </div>
+        </div>
+        <div class="col-12 col-xl-4">
+            <div class="col-12 px-0 mb-4">
+                <div class="card border-0 shadow">
+                    <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                        <div class="d-block">
+                            <div>
+                                <span class="h6 text-black-400 mb-0" id="nom-segment">Mon ascension</span> 
+                            </div>                        
+                        </div>                       
+                    </div>
+                    <div class="card-body p-2">
+                        <div>
+                            <span class="h6 text-gray-400 mb-0">Distance:</span> 
+                            <span class="text-success fw-bolder" id="distance-ascension"></span>
+                        </div>
+                        <div>
+                            <span class="h6 text-gray-400 mb-0">Dénivelé:</span> 
+                            <span class="text-success fw-bolder" id="elevation-ascension"></span>
+                        </div>
+                        <div>
+                            <span class="h6 text-gray-400 mb-0">Nb d'ascensions:</span> 
+                            <span class="text-success fw-bolder" id="nb-ascensions"></span>
+                        </div>
+                        <div> <span class="h6 text-gray-400 mb-0">&nbsp;</span> </div>
+                        <div class="d-flex align-items-center justify-content-between  pb-3">
+                        <div>
+                            <span class="h6 text-gray-400 mb-0">Vitesse Ascensionnelle</span> 
+                            <ul>
+                                <li>
+                                    <span class="h8 text-gray-400 mb-0">min:</span>
+                                    <span class="text-success fw-bolder" id="va-ascension-min"></span>
+                                </li>
+                                <li>
+                                    <span class="h8 text-gray-400 mb-0">max:</span>
+                                    <span class="text-success fw-bolder" id="va-ascension-max"></span>
+                                </li>
+                                <li>
+                                    <span class="h8 text-gray-400 mb-0">moyenne:</span>
+                                    <span class="text-success fw-bolder" id="va-ascension-moyenne"></span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <span class="h6 text-gray-400 mb-0">Vitesse</span> 
+                            <ul>
+                                <li>
+                                    <span class="h8 text-gray-400 mb-0">min:</span>
+                                    <span class="text-success fw-bolder" id="vitesse-ascension-min"></span>
+                                </li>
+                                <li>
+                                    <span class="h8 text-gray-400 mb-0">max:</span>
+                                    <span class="text-success fw-bolder" id="vitesse-ascension-max"></span>
+                                </li>
+                                <li>
+                                    <span class="h8 text-gray-400 mb-0">moyenne:</span>
+                                    <span class="text-success fw-bolder" id="vitesse-ascension-moyenne"></span>
+                                </li>
+                            </ul>
+                        </div>
+                        </div>                
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script>
+    function createShortcut() {
+        da=new Date()
+        dor=2017
+        dc=document.getElementById('year_shortcut')
+        var cblist=[]
+        for (var i=dor; i<=da.getFullYear();i++ ){
+            var newCheckbox = document.createElement("input");
+            newCheckbox.type = "checkbox";
+            newCheckbox.myparam=i
+            newCheckbox.id="year"+i
+            newCheckbox.addEventListener(
+                'change',
+                function(evt) { 
+                    
+                    if (this.checked == true) {
+                            for  (var j=dor-2017; j<=da.getFullYear()-2017;j++ ) {
+                                if (j+2017 != evt.currentTarget.myparam ) {
+                                    cblist[j].checked=false
+                                }
+                            }
+                            document.getElementById('start').value=evt.currentTarget.myparam+"-01-01"
+                            document.getElementById('start').max=(evt.currentTarget.myparam+1).toString()+"-01-01"
+                            document.getElementById('end').value=(evt.currentTarget.myparam+1).toString()+"-01-01"
+                            document.getElementById('end').min=evt.currentTarget.myparam+"-01-01"
+                            updateSegmentInfo()
+                        } else {
+                            document.getElementById('start').value=""
+                            document.getElementById('end').value=""
+                        }
+                    },
+            )
+
+            cblist.push(newCheckbox)
+
+            dc.appendChild(newCheckbox);
+            var label = document.createElement('label');
+            label.htmlFor = i;
+            label.appendChild(document.createTextNode(i));
+            label.style.paddingLeft="4px"
+            label.style.paddingRight="8px"
+            dc.appendChild(label);
+            }
+    }
+
+
+
+    function updateSegmentInfo() {
+        debd=document.getElementById('start').value 
+        endd=document.getElementById('end').value 
+        var win=document.getElementById('graphframe')    
+        win.src="/graph?sid="+document.getElementById("hidden-sid").innerHTML+"&name="+document.getElementById("segment-name").innerHTML+"&deb="+debd+"&fin="+endd          
+    }
+
+   createShortcut()
+</script>
+{% endblock javascripts %}

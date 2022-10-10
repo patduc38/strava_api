@@ -1,0 +1,172 @@
+
+{% block title %}{% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script> 
+{% block content %}
+ <div class="card-body p-2">
+        <canvas id="bar-chart"  height="450"></canvas>
+            <script>
+
+                        function convertHMS(value) {
+                                    const sec = parseInt(value, 10); // convert value to number if it's string
+                                    let hours   = Math.floor(sec / 3600); // get hours
+                                    let minutes = Math.floor((sec - (hours * 3600)) / 60); // get minutes
+                                    let seconds = sec - (hours * 3600) - (minutes * 60); //  get seconds
+                                    // add 0 if value < 10; Example: 2 => 02
+                                    if (hours   < 10) {hours   = "0"+hours;}
+                                    if (minutes < 10) {minutes = "0"+minutes;}
+                                    if (seconds < 10) {seconds = "0"+seconds;}
+                                    if (hours == "00") {
+                                        return minutes+'\''+seconds+'\'\''; // Return is MM : SS
+                                    } else {
+                                        return hours+'h'+minutes+'\''+seconds+'\'\''; // Return is HH : MM : SS
+                                    }
+                            }
+
+
+                        function argMax(array) {
+                            return array.map((x, i) => [x, i]).reduce((r, a) => (a[0] > r[0] ? a : r))[1];
+                        }
+                        function argMin(array) {
+                            return array.map((x, i) => [x, i]).reduce((r, a) => (a[0] < r[0] ? a : r))[1];
+                        }
+
+
+                        deb="{{datedeb}}"
+                        fin="{{datefin}}"
+                        labels={{ labels | safe }}
+                        values={{ values | safe}}
+                        sid={{ sid | safe}}
+                        distance={{ distance | safe}}
+                        elevation={{ elevation | safe}}
+
+                        if (name != "") {
+                            var color = values.map(x => 'rgba(75,192,192,0.4)'); 
+                            
+                            if (deb == "") {
+                                dateo=Date.parse("1970-01-01T12:59:26Z")
+                            } else {
+                                dateo=Date.parse(deb)
+                            }
+                            if (fin == "") {
+                                datef=Date.parse("2070-01-01T12:59:26Z")
+                            } else {
+                                datef=Date.parse(fin)
+                            }
+                            kvalues=[]
+                            klabels=[]
+
+           
+
+                        for (var i=0; i<values.length; i++) {
+                            d=Date.parse(labels[i])
+                            if (d>=dateo &&  d<=datef ) {
+                                kvalues.push(values[i])                
+                                klabels.push(labels[i].replace(/T.*/,""))
+                            }
+                        }
+
+                        var color = kvalues.map(x => 'rgba(75,192,192,0.4)'); 
+                        var worst=argMax(kvalues)
+                        var best=argMin(kvalues)
+
+                        // change max/min color
+
+                        color[worst] = 'red';
+                        color[best] = 'blue';
+                        
+
+                        const average_time= kvalues.reduce((a, b) => a + b, 0) / kvalues.length;
+
+                        var worstl=window.parent.document.getElementById("worst-time")
+                        worstl.innerText=convertHMS(kvalues[worst])
+                        var bestl=window.parent.document.getElementById("best-time")
+                        bestl.innerText=convertHMS(kvalues[best])
+                        var spanId=window.parent.document.getElementById("hidden-sid")
+                        spanId.innerText=sid
+                        var nbasc=window.parent.document.getElementById("nb-ascensions")
+                        nbasc.innerText=kvalues.length                        
+                        nbasc=window.parent.document.getElementById("distance-ascension")
+                        nbasc.innerText=distance+"m"
+                        nbasc=window.parent.document.getElementById("elevation-ascension")
+                        nbasc.innerText=elevation+"m"+ " ( "+(elevation*100/distance).toFixed(2)+"%)"
+                        nbasc=window.parent.document.getElementById("va-ascension-min")
+                        nbasc.innerText=Math.round(3600*elevation/kvalues[worst])+"m/h"
+                        nbasc=window.parent.document.getElementById("va-ascension-max")
+                        nbasc.innerText=Math.round(3600*elevation/kvalues[best])+"m/h"
+                        nbasc=window.parent.document.getElementById("va-ascension-moyenne")
+                        nbasc.innerText=Math.round(3600*elevation/average_time)+"m/h"
+                        nbasc=window.parent.document.getElementById("vitesse-ascension-min")
+                        nbasc.innerText=(3.6*distance/kvalues[worst]).toFixed(2)+"km/h"
+                        nbasc=window.parent.document.getElementById("vitesse-ascension-max")
+                        nbasc.innerText=(3.6*distance/kvalues[best]).toFixed(1)+"km/h"
+                        nbasc=window.parent.document.getElementById("vitesse-ascension-moyenne")
+                        nbasc.innerText=(3.6*distance/average_time).toFixed(1)+"km/h"
+
+                    var ctx = document.getElementById("bar-chart").getContext("2d")
+                    var lineChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: klabels,
+                            datasets:[
+                                {
+                                label: "Temps d'ascension",
+                                data: kvalues,
+                                fill: false,
+                                borderColor: "rgb(75,192,192)",
+                                pointBackgroundColor: color,
+                                lineTension: 0.8,
+                                cubicInterpolationMode: 'monotone',
+                                }
+                            ]
+                        },
+                        options: {
+                            legend: {
+                                display: false //This will do the task
+                            },
+                            responsive: true,
+                            scales: {
+
+                                yAxes: [{
+                                    display: true,
+                                    scaleLabel: {
+                                    show: true
+                                    },
+                                    gridLines:{
+                                    color:"#ecedef"
+                                    },
+                                    ticks: {
+                                    beginAtZero:false,
+                                    fontColor:"#8f9092",
+                                    callback:function(value) {
+                                            return convertHMS(value);
+                                    }
+                                    }
+                                }]
+
+                            },
+                            maintainAspectRatio: false               
+                        }
+                    });
+                }
+            </script>
+    </div>    
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}
+<script>
+    function updateShortcutParent() {
+        da=new Date()
+        dor=2017
+        var cblist=[]
+        for (var i=dor; i<=da.getFullYear();i++ ){
+            cb=window.parent.document.getElementById("year"+i)
+            cb.checked=false            
+        }
+    }
+   // updateShortcutParent()
+</script>

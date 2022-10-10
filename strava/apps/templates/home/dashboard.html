@@ -1,0 +1,542 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+
+
+{% block content %}
+<script>
+    function updateShortcut() {
+        da=new Date()
+        dor=2017
+        var cblist=[]
+        for (var i=dor; i<=da.getFullYear();i++ ){
+            cb=document.getElementById("year"+i)
+            cb.checked=false            
+        }
+    }
+
+    function updateEndMin() {
+        updateShortcut()
+        console.debug("Pat add patochon")
+
+        var debd=document.getElementById('start')
+        if (debd.value == '') {
+            debd.value =''
+            return
+        }
+        var d=new Date(debd.value)
+        var min=new Date(debd.min)
+        var max=new Date(debd.max)
+        if (d < min) {
+            alert("Specified that is lower than minimum allowed date: "+min)
+            debd.value=''
+            return
+        } 
+        if (d > max) {
+            alert("Specified that is lower than maximum allowed date: "+max)
+            debd.value=''
+            return
+        } 
+        
+        document.getElementById('end').min=debd
+        
+    }
+
+    function updateStartMax() {
+        console.debug("Pat add patochon2")
+
+        updateShortcut()
+        var endd=document.getElementById('end') 
+        if (endd.value == '') {
+            endd.value =''
+            return
+        }
+        var d=new Date(endd.value)
+        var min=new Date(endd.min)
+        var max=new Date(endd.max)
+        if (d < min) {
+            alert("Specified that is lower than minimum allowed date: "+min)
+            endd.value=''
+            return
+        } 
+        if (d > max) {
+            alert("Specified that is lower than maximum allowed date: "+max)
+            endd.value=''
+            return
+        } 
+        
+        document.getElementById('start').max=endd
+    }
+</script>
+
+
+        <div class="col-12 col-xl-12">
+            <div class="d-block ms-auto">
+                <label for="start">Start date:</label>
+                <input type="date" id="start" name="start"
+                    value=""
+                    min="2017-01-01" max=""
+                    onBlur="updateEndMin();        updateShortcut()">
+
+                <label for="end" style="margin: 0px 0px 0px 20px;">End date: </label>
+                <input type="date" id="end" name="end"
+                        value=""
+                        min="2017-01-01"
+                        onblur="updateStartMax();  updateShortcut()">
+                <button type="submit"  id="button" onclick="updateDashboardInfo()">filter</button>
+                <div class="small mt-2" id="year_shortcut"></div>
+
+            </div>
+
+            <div class="col-12 px-0 mb-4">
+                        <div class="card border-0 shadow">
+                            <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                                <div class="d-block">
+                                    <div>
+                                        <span class="h6 text-black-400 mb-0" id="nom-segment">Statistiques relatives aux sorties</span> 
+                                    </div>                        
+                                </div>                       
+                            </div>
+                            <div class="card-body p-2">
+                                <div>
+                                    <span class="h6 text-gray-400 mb-0">Distance cumulée:</span> 
+                                    <span class="text-gray-400 fw-bolder" id="distance-totale"></span>
+                                </div>
+                                <div>
+                                    <span class="h6 text-gray-400 mb-0">Dénivelé cumulé:</span> 
+                                    <span class="text-gray-400 fw-bolder" id="elevation-total"></span>
+                                </div> 
+                                <div>
+                                    <span class="h6 text-gray-400 mb-0">Nb de sorties:</span> 
+                                    <span class="text-gray-400 fw-bolder" id="activities-total"></span>
+                                </div> 
+                                <div>
+                                    <span class="h6 text-gray-400 mb-0">Temps cumulé:</span> 
+                                    <span class="text-gray-400 fw-bolder" id="tps-total"></span>
+                                </div>                                
+                                <div> <span class="h6 text-gray-400 mb-0">&nbsp;</span> </div>     
+                                <div class="d-flex align-items-center justify-content-between  pb-3">
+                                    <div>
+                                        <span class="h6 text-gray-400 mb-0">Distance</span> 
+                                        <ul>
+                                            <li>
+                                                <span class="h8 text-gray-400 mb-0">min:</span>
+                                                <span class="text-danger fw-bolder" id="distance-min"></span>
+                                            </li>
+                                            <li>
+                                                <span class="h8 text-gray-400 mb-0">max:</span>
+                                                <span class="text-success fw-bolder" id="distance-max"></span>
+                                            </li>
+                                            <li>
+                                                <span class="h8 text-gray-400 mb-0">moyenne:</span>
+                                                <span class="text-gray-400 fw-bolder" id="distance-moyenne"></span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <span class="h6 text-gray-400 mb-0">Vitesse</span> 
+                                        <ul>                                      
+                                            <li>
+                                                <span class="h8 text-gray-400 mb-0">min:</span>
+                                                <span class="text-danger fw-bolder" id="vitesse-min"></span>
+                                            </li>
+                                            <li>
+                                                <span class="h8 text-gray-400 mb-0">max:</span>
+                                                <span class="text-success fw-bolder" id="vitesse-max"></span>
+                                            </li>
+                                            <li>
+                                                <span class="h8 text-gray-400 mb-0">moyenne:</span>
+                                                <span class="text-gray-400 fw-bolder" id="vitesse-moyenne"></span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <span class="h6 text-gray-400 mb-0">Denivelé</span> 
+                                        <ul>
+                                            <li>
+                                                <span class="h8 text-gray-400 mb-0">min:</span>
+                                                <span class="text-danger fw-bolder" id="denivele-min"></span>
+                                            </li>
+                                            <li>
+                                                <span class="h8 text-gray-400 mb-0">max:</span>
+                                                <span class="text-success fw-bolder" id="denivele-max"></span>
+                                            </li>
+                                            <li>
+                                                <span class="h8 text-gray-400 mb-0">moyenne:</span>
+                                                <span class="text-gray-400 fw-bolder" id="denivele-moyenne"></span>
+                                            </li>
+                                        </ul>
+                                    </div>      
+                                    <div>
+                                        <span class="h6 text-gray-400 mb-0">Cadence</span> 
+                                        <ul>
+                                            <li>
+                                                <span class="h8 text-gray-400 mb-0">min:</span>
+                                                <span class="text-danger fw-bolder" id="cadence-min"></span>
+                                            </li>
+                                            <li>
+                                                <span class="h8 text-gray-400 mb-0">max:</span>
+                                                <span class="text-success fw-bolder" id="cadence-max"></span>
+                                            </li>
+                                            <li>
+                                                <span class="h8 text-gray-400 mb-0">moyenne:</span>
+                                                <span class="text-gray-400 fw-bolder" id="cadence-moyenne"></span>
+                                            </li>
+                                        </ul>
+                                    </div>                                                                               
+                                </div> 
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-xl-12">
+                    <div class="col-12 px-0 mb-4">
+                                <div class="card border-0 shadow">
+                                    <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                                        <div class="d-block">
+                                            <div>
+                                                <span class="h6 text-black-400 mb-0" id="nom-segment">Statistiques relatives aux ascensions</span> 
+                                            </div>                        
+                                        </div>                       
+                                    </div>
+                                    <div class="card-body p-2">                                    
+                                            <div> <span class="h6 text-gray-400 mb-0">&nbsp;</span> </div>
+                                                <div class="d-flex align-items-left justify-content-between  pb-3">
+                                                    <div>
+                                                        <span class="h6 text-gray-400 mb-0">Nb d'ascensions:</span> 
+                                                        <span class="text-gray-400 fw-bolder" id="nb-ascensions"></span>
+                                                    <br>
+                                                        <span class="h6 text-gray-400 mb-0">denivelé cumulé:</span> 
+                                                        <span class="text-gray-400 fw-bolder" id="deniv-ascensions"></span>
+                                                    <br>
+                                                        <span class="h6 text-gray-400 mb-0">Temps cumulé:</span> 
+                                                        <span class="text-gray-400 fw-bolder" id="tps-ascensions"></span>
+                                                    </div>
+
+                                                <div>
+                                                <span class="h6 text-gray-400 mb-0">Vitesse Ascensionnelle</span> 
+                                                <ul>
+                                                    <li>
+                                                        <span class="h8 text-gray-400 mb-0">min:</span>
+                                                        <span class="text-danger fw-bolder" id="va-ascension-min"></span>
+                                                    </li>
+                                                    <li>
+                                                        <span class="h8 text-gray-400 mb-0">max:</span>
+                                                        <span class="text-success fw-bolder" id="va-ascension-max"></span>
+                                                    </li>
+                                                    <li>
+                                                        <span class="h8 text-gray-400 mb-0">moyenne:</span>
+                                                        <span class="text-gray-400 fw-bolder" id="va-ascension-moyenne"></span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <span class="h6 text-gray-400 mb-0">Distance</span> 
+                                                <ul>                                      
+                                                    <li>
+                                                        <span class="h8 text-gray-400 mb-0">min:</span>
+                                                        <span class="text-danger fw-bolder" id="va-distance-min"></span>
+                                                    </li>
+                                                    <li>
+                                                        <span class="h8 text-gray-400 mb-0">max:</span>
+                                                        <span class="text-success fw-bolder" id="va-distance-max"></span>
+                                                    </li>
+                                                    <li>
+                                                        <span class="h8 text-gray-400 mb-0">moyenne:</span>
+                                                        <span class="text-gray-400 fw-bolder" id="va-distance-moyenne"></span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <span class="h6 text-gray-400 mb-0">Vitesse</span> 
+                                                <ul>
+                                                    <li>
+                                                        <span class="h8 text-gray-400 mb-0">min:</span>
+                                                        <span class="text-danger fw-bolder" id="va-min"></span>
+                                                    </li>
+                                                    <li>
+                                                        <span class="h8 text-gray-400 mb-0">max:</span>
+                                                        <span class="text-success fw-bolder" id="va-max"></span>
+                                                    </li>
+                                                    <li>
+                                                        <span class="h8 text-gray-400 mb-0">moyenne:</span>
+                                                        <span class="text-gray-400 fw-bolder" id="va-moyenne"></span>
+                                                    </li>
+                                                </ul>
+                                            </div>                                                                               
+                                        </div>                
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script>
+
+
+    function updateDashboardInfo() {
+        debd=document.getElementById('start').value 
+        endd=document.getElementById('end').value 
+
+        if (debd == "") {
+            dateo=Date.parse("1970-01-01T12:59:26Z")
+        } else {
+            dateo=Date.parse(debd)
+        }
+        if (endd == "") {
+            datef=Date.parse("2070-01-01T12:59:26Z")
+        } else {
+            datef=Date.parse(endd)
+        }
+        
+        f_distance=[]
+        f_moving_time=[]
+        f_elevation=[]
+        f_average_speed=[]
+        f_max_speed=[]
+        f_average_cadence=[]
+        f_average_temp=[]
+        f_gear_name=[]
+        f_gear_distance=[]
+
+        f_ascensions_distance=[]
+        f_ascensions_moving_time=[]
+        f_ascensions_elevation=[]
+
+        for (var i=0; i<activities_labels.length; i++) {
+            var d=Date.parse(activities_labels[i])
+            if (d>=dateo &&  d<=datef ) {
+                f_distance.push(distance[i])     
+                f_moving_time.push(moving_time[i])   
+                f_elevation.push(elevation[i])   
+                f_average_speed.push(average_speed[i])   
+                f_max_speed.push(max_speed[i])   
+                f_average_cadence.push(average_cadence[i])   
+                f_average_temp.push(average_temp[i])   
+                f_gear_name.push(gear_name[i])   
+                f_gear_distance.push(gear_distance[i])              
+            }    
+        }                       
+
+        f_average_cadence=f_average_cadence.filter(function(e){return e})
+        var f_tot=f_distance.reduce((a, b) => a + b, 0)
+        var f_elev=f_elevation.reduce((a, b) => a + b, 0)
+        
+        for (var i=0; i<ascensions_labels.length; i++) {
+            var d=Date.parse(ascensions_labels[i])
+            if (d>=dateo &&  d<=datef ) {
+                f_ascensions_distance.push(ascensions_distance[i])     
+                f_ascensions_moving_time.push(ascensions_moving_time[i])   
+                f_ascensions_elevation.push(ascensions_elevation[i])               
+            }    
+        }            
+
+
+        document.getElementById("distance-totale").innerText=(f_tot/1000).toFixed(0)+" km"
+        document.getElementById("elevation-total").innerText=(f_elev).toFixed(0)+" m"
+        document.getElementById("activities-total").innerText=f_distance.length
+        
+        var nbtotsec=f_moving_time.reduce((a, b) => a + b, 0)
+        var nbh=Math.floor(nbtotsec/3600)
+        var rs=nbtotsec%3600
+        var nbmin=Math.floor(rs/60)
+        var nbsec=rs%60
+        document.getElementById("tps-total").innerText=nbh+'h '+nbmin+"' "+nbsec+"''"
+        
+        document.getElementById("distance-min").innerText=(f_distance.reduce((x, y) => Math.min(x, y))/1000).toFixed(1)+" km"
+        document.getElementById("distance-max").innerText=(f_distance.reduce((x, y) => Math.max(x, y))/1000).toFixed(1)+" km"
+        document.getElementById("distance-moyenne").innerText=(f_tot/f_distance.length/1000).toFixed(1)+" km"
+
+        document.getElementById("vitesse-min").innerText=(f_average_speed.reduce((x, y) => Math.min(x, y))*3.6).toFixed(2)+" km/h"
+        document.getElementById("vitesse-max").innerText=(f_average_speed.reduce((x, y) => Math.max(x, y))*3.6).toFixed(2)+" km/h"
+        document.getElementById("vitesse-moyenne").innerText=((f_average_speed.reduce((a, b) => a + b, 0))*3.6/f_average_speed.length).toFixed(2)+" km"
+
+        document.getElementById("denivele-min").innerText=(f_elevation.reduce((x, y) => Math.min(x, y))).toFixed(1)+" m"
+        document.getElementById("denivele-max").innerText=(f_elevation.reduce((x, y) => Math.max(x, y))).toFixed(1)+" m"
+        document.getElementById("denivele-moyenne").innerText=(f_elev/f_elevation.length).toFixed(1)+" m"
+
+        document.getElementById("cadence-min").innerText=(f_average_cadence.reduce((x, y) => Math.min(x, y))).toFixed(1)+" tr/m"
+        document.getElementById("cadence-max").innerText=(f_average_cadence.reduce((x, y) => Math.max(x, y))).toFixed(1)+" tr/m"
+        document.getElementById("cadence-moyenne").innerText=(f_average_cadence.reduce((a, b) => a + b, 0)/f_average_cadence.length).toFixed(1)+" tr/m"
+
+        var f_as_mt=f_ascensions_moving_time.reduce((a, b) => a + b, 0)
+        var f_as_distance=f_ascensions_distance.reduce((a, b) => a + b, 0)
+        var f_as_elev=f_ascensions_elevation.reduce((a, b) => a + b, 0)
+
+        document.getElementById("nb-ascensions").innerText=f_ascensions_distance.length
+        document.getElementById("deniv-ascensions").innerText=f_as_elev+" m"
+        
+        var nbtotsec=f_ascensions_moving_time.reduce((a, b) => a + b, 0)
+        var nbh=Math.floor(nbtotsec/3600)
+        var rs=nbtotsec%3600
+        var nbmin=Math.floor(rs/60)
+        var nbsec=rs%60
+        document.getElementById("tps-ascensions").innerText=nbh+'h '+nbmin+"' "+nbsec+"''"
+    
+        document.getElementById("va-ascension-min").innerText=(minimum(f_ascensions_elevation,f_ascensions_moving_time)*3600).toFixed(0)+" m/h"
+        document.getElementById("va-ascension-max").innerText=(maximum(f_ascensions_elevation,f_ascensions_moving_time)*3600).toFixed(0)+" m/h"
+        document.getElementById("va-ascension-moyenne").innerText=(f_as_elev*3600/f_as_mt).toFixed(0)+" m/h"
+
+        document.getElementById("va-distance-min").innerText=(f_ascensions_distance.reduce((x, y) => Math.min(x, y))/1000).toFixed(1)+" km"
+        document.getElementById("va-distance-max").innerText=(f_ascensions_distance.reduce((x, y) => Math.max(x, y))/1000).toFixed(1)+" km"
+        document.getElementById("va-distance-moyenne").innerText=(f_as_distance/f_ascensions_distance.length/1000).toFixed(1)+" km"
+
+        document.getElementById("va-min").innerText=(minimum(f_ascensions_distance,f_ascensions_moving_time)*3.6).toFixed(1)+" km/h"
+        document.getElementById("va-max").innerText=(maximum(f_ascensions_distance,f_ascensions_moving_time)*3.6).toFixed(1)+" km/h"
+        document.getElementById("va-moyenne").innerText=((f_as_distance/f_as_mt)*3.6).toFixed(1)+" km/h"
+
+    }
+
+    function minimum(metric,moving_time) {
+        min=12000
+        for (var i = 0; i < metric.length; i++)  {
+            val=metric[i]/moving_time[i]
+            if (val < min) {
+                min=val
+            } 
+        }
+        return min
+    }
+
+    function maximum(metric,moving_time) {
+        max=0
+        for (var i = 0; i < metric.length; i++)  {
+            val=metric[i]/moving_time[i]
+            if (val > max) {
+                max=val
+            } 
+        }
+        return max
+    }
+
+    function createShortcut() {
+        da=new Date()
+        dor=2017
+        dc=document.getElementById('year_shortcut')
+        var cblist=[]
+        for (var i=dor; i<=da.getFullYear();i++ ){
+            var newCheckbox = document.createElement("input");
+            newCheckbox.type = "checkbox";
+            newCheckbox.myparam=i
+            newCheckbox.id="year"+i
+            newCheckbox.addEventListener(
+                'change',
+                function(evt) { 
+                    
+                    if (this.checked == true) {
+                            for  (var j=dor-2017; j<=da.getFullYear()-2017;j++ ) {
+                                if (j+2017 != evt.currentTarget.myparam ) {
+                                    cblist[j].checked=false
+                                }
+                            }
+                            document.getElementById('start').value=evt.currentTarget.myparam+"-01-01"
+                            document.getElementById('start').max=(evt.currentTarget.myparam+1).toString()+"-01-01"
+                            document.getElementById('end').value=(evt.currentTarget.myparam+1).toString()+"-01-01"
+                            document.getElementById('end').min=evt.currentTarget.myparam+"-01-01"
+                            updateDashboardInfo()
+                        } else {
+                            document.getElementById('start').value=""
+                            document.getElementById('end').value=""
+                        }
+                    },
+            )
+
+            cblist.push(newCheckbox)
+
+            dc.appendChild(newCheckbox);
+            var label = document.createElement('label');
+            label.htmlFor = i;
+            label.appendChild(document.createTextNode(i));
+            label.style.paddingLeft="4px"
+            label.style.paddingRight="8px"
+            dc.appendChild(label);
+            }
+    }
+
+    //generate shortcut radio
+    createShortcut()
+
+
+    distance={{ distance | safe }}
+    moving_time={{ moving_time | safe }}
+    elevation={{ elevation | safe }}
+    average_speed={{ average_speed | safe }}
+    max_speed={{ max_speed | safe }}
+    average_cadence={{ average_cadence | safe }}
+    r_average_cadence=average_cadence.filter(function(e){return e})
+    average_temp={{ average_temp | safe }}
+    gear_name={{ gear_name | safe }}
+    gear_distance={{ gear_distance | safe }}
+    activities_labels={{ activities_labels | safe }}
+
+
+    ascensions_distance={{ ascensions_distance | safe }}
+    ascensions_moving_time={{ ascensions_moving_time | safe }}
+    ascensions_elevation={{ ascensions_elevation | safe }}
+    ascensions_labels={{ ascensions_labels | safe }}
+
+    var tot=distance.reduce((a, b) => a + b, 0)
+    var elev=elevation.reduce((a, b) => a + b, 0)
+    
+
+    document.getElementById("distance-totale").innerText=(tot/1000).toFixed(0)+" km"
+    document.getElementById("elevation-total").innerText=(elev).toFixed(0)+" m"
+    document.getElementById("activities-total").innerText=distance.length
+
+    var nbtotsec=moving_time.reduce((a, b) => a + b, 0)
+    var nbh=Math.floor(nbtotsec/3600)
+    var rs=nbtotsec%3600
+    var nbmin=Math.floor(rs/60)
+    var nbsec=rs%60
+    document.getElementById("tps-total").innerText=nbh+'h '+nbmin+"' "+nbsec+"''"
+
+    document.getElementById("distance-min").innerText=(distance.reduce((x, y) => Math.min(x, y))/1000).toFixed(1)+" km"
+    document.getElementById("distance-max").innerText=(distance.reduce((x, y) => Math.max(x, y))/1000).toFixed(1)+" km"
+    document.getElementById("distance-moyenne").innerText=(tot/distance.length/1000).toFixed(1)+" km"
+
+    document.getElementById("vitesse-min").innerText=(average_speed.reduce((x, y) => Math.min(x, y))*3.6).toFixed(2)+" km/h"
+    document.getElementById("vitesse-max").innerText=(average_speed.reduce((x, y) => Math.max(x, y))*3.6).toFixed(2)+" km/h"
+    document.getElementById("vitesse-moyenne").innerText=((average_speed.reduce((a, b) => a + b, 0))*3.6/average_speed.length).toFixed(2)+" km"
+
+    document.getElementById("denivele-min").innerText=(elevation.reduce((x, y) => Math.min(x, y))).toFixed(1)+" m"
+    document.getElementById("denivele-max").innerText=(elevation.reduce((x, y) => Math.max(x, y))).toFixed(1)+" m"
+    document.getElementById("denivele-moyenne").innerText=(elev/elevation.length).toFixed(1)+" m"
+
+    document.getElementById("cadence-min").innerText=(r_average_cadence.reduce((x, y) => Math.min(x, y))).toFixed(1)+" tr/m"
+    document.getElementById("cadence-max").innerText=(r_average_cadence.reduce((x, y) => Math.max(x, y))).toFixed(1)+" tr/m"
+    document.getElementById("cadence-moyenne").innerText=(r_average_cadence.reduce((a, b) => a + b, 0)/r_average_cadence.length).toFixed(1)+" tr/m"
+
+    var as_mt=ascensions_moving_time.reduce((a, b) => a + b, 0)
+    var as_distance=ascensions_distance.reduce((a, b) => a + b, 0)
+    var as_elev=ascensions_elevation.reduce((a, b) => a + b, 0)
+
+    document.getElementById("nb-ascensions").innerText=ascensions_distance.length
+    document.getElementById("deniv-ascensions").innerText=as_elev+" m"
+
+    var nbtotsec=ascensions_moving_time.reduce((a, b) => a + b, 0)
+    var nbh=Math.floor(nbtotsec/3600)
+    var rs=nbtotsec%3600
+    var nbmin=Math.floor(rs/60)
+    var nbsec=rs%60
+    document.getElementById("tps-ascensions").innerText=nbh+'h '+nbmin+"' "+nbsec+"''"
+    document.getElementById("va-ascension-min").innerText=(minimum(ascensions_elevation,ascensions_moving_time)*3600).toFixed(0)+" m/h"
+    document.getElementById("va-ascension-max").innerText=(maximum(ascensions_elevation,ascensions_moving_time)*3600).toFixed(0)+" m/h"
+    document.getElementById("va-ascension-moyenne").innerText=(as_elev*3600/as_mt).toFixed(0)+" m/h"
+
+    document.getElementById("va-distance-min").innerText=(ascensions_distance.reduce((x, y) => Math.min(x, y))/1000).toFixed(1)+" km"
+    document.getElementById("va-distance-max").innerText=(ascensions_distance.reduce((x, y) => Math.max(x, y))/1000).toFixed(1)+" km"
+    document.getElementById("va-distance-moyenne").innerText=(as_distance/ascensions_distance.length/1000).toFixed(1)+" km"
+
+    document.getElementById("va-min").innerText=(minimum(ascensions_distance,ascensions_moving_time)*3.6).toFixed(1)+" km/h"
+    document.getElementById("va-max").innerText=(maximum(ascensions_distance,ascensions_moving_time)*3.6).toFixed(1)+" km/h"
+    document.getElementById("va-moyenne").innerText=((as_distance/as_mt)*3.6).toFixed(1)+" km/h"
+
+</script>
+{% endblock javascripts %}

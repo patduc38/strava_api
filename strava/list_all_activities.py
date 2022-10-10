@@ -21,12 +21,18 @@ url = "https://www.strava.com/api/v3/activities/"
 access_token = strava_tokens['access_token']
 # Get first page of activities from Strava with all fields
 p=1
+a=[]
+
 while 1 : 
     r = requests.get(url + '?access_token=' + access_token+"&per_page=200&page="+ str(p))
     p=p+1
     r = r.json()
+    #  print("Pat Add ", r)
     if not r : 
         break
     for s in  r :
         if s['id'] > n :
-            print(str(s['id']))
+            #print(str(s['id']))
+            a.append(str(s['id']))
+a.reverse()
+print("Pat Add",a)

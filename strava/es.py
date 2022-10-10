@@ -13,11 +13,15 @@ access_token = strava_tokens['access_token']
 # Get first page of activities from Strava with all fields
 p=1
 while 1 : 
-    r = requests.get(url + '?access_token=' + access_token+"&per_page=200&page="+ str(p))
-    p=p+1
-    r = r.json()
+    try :
+        r = requests.get(url + '?access_token=' + access_token+"&per_page=200&page="+ str(p))
+        p=p+1
+        r = r.json()
+    except Exception as e :
+        print("Err=",e)
     if not r : 
         break
     for s in  r :
-        print(str(p)+" " +str(s['id']))
+        print("Pat Add",r)
+    break    
     #print(json.dumps(r))    

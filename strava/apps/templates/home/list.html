@@ -1,0 +1,96 @@
+<head>
+    <link rel="canonical" href="https://appseed.us/admin-dashboards/flask-dashboard-volt">
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="120x120" href="/static/assets/img/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/img/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/assets/img/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/static/assets/img/favicon/site.webmanifest">
+    <link rel="mask-icon" href="/static/assets/img/favicon/safari-pinned-tab.svg" color="#ffffff">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="theme-color" content="#ffffff">
+
+    <link type="text/css" href="/static/assets/vendor/sweetalert2/dist/sweetalert2.min.css" rel="stylesheet">
+
+    <link type="text/css" href="/static/assets/vendor/notyf/notyf.min.css" rel="stylesheet">
+    <link type="text/css" href="/static/assets/css/volt.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script> 
+
+</head>
+
+{% block title %}{% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+{% block content %}
+<body style="height:100%">
+<div class="table-responsive">
+    <!--div class="tbodyDiv"-->
+        <table class="table align-items-center table-flush" id="segments-table">
+            <thead class="thead-light">
+            <tr>
+                <th class="border-bottom" style="padding-left: 8px" scope="col">Segment</th>
+                <th class="border-bottom" style="padding-left: 8px" scope="col">link</th>
+            </tr>
+            </thead>
+
+            <tbody id="segments-table-body">
+            
+            </tbody>
+        </table>
+    <!--div-->
+</div>
+
+<script>
+      function updateShortcutParent() {
+        da=new Date()
+        dor=2017
+        var cblist=[]
+        for (var i=dor; i<=da.getFullYear();i++ ){
+            cb=window.parent.document.getElementById("year"+i)
+            cb.checked=false            
+        }
+    }
+
+    function navigate(url, name)
+                    {
+                        var iframe = window.parent.document.getElementsByName( "graphframe" )[0];
+                        iframe.src = url;
+                        var sn = window.parent.document.getElementById("segment-name");
+                        sn.innerText=name
+                        sn = window.parent.document.getElementById("nom-segment");
+                        sn.innerText=name
+                    }
+
+
+                    //document.getElementById('text').value="{{pattern|safe}}" 
+                    //starcheckbox=document.getElementById('starred')
+                    starred={{starred|safe}}
+                    //starcheckbox.checked=starred
+                    names={{names|safe}}
+                    ids={{ids|safe}}
+                    
+                    tbody=document.getElementById('segments-table-body')
+                    content=""
+                    for (var i=0 ;i<names.length;i++) {
+                        name=names[i].toString()
+                        qname=encodeURI(name)
+                        var newRow = tbody.insertRow()
+                        var a = document.createElement('a');
+                        var newCell = newRow.insertCell();
+                        var newText = document.createTextNode(name);
+                        a.appendChild(newText)
+                        a.href='javascript:navigate("/graph?sid=' + ids[i] + '&name='+ qname+'","'+name+'"); updateShortcutParent()'
+                        newCell.appendChild(a);
+                        newCell = newRow.insertCell();
+                        newText = document.createTextNode("links   bangs");
+                        newCell.appendChild(newText);
+                    }
+    </script>
+    
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}
+</body>

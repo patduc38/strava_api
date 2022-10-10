@@ -12,7 +12,7 @@ if strava_tokens['expires_at'] < time.time():
                         url = 'https://www.strava.com/oauth/token',
                         data = {
                                 'client_id': 33645,
-                                'client_secret': 'put_client_secret_get_from_strava_app',
+                                'client_secret': '00889cefb82d93f0bab5241b6adcfbcf75625ffb',
                                 'grant_type': 'refresh_token',
                                 'refresh_token': strava_tokens['refresh_token']
                                 }
