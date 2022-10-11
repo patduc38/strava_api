@@ -340,7 +340,7 @@ def retrieve_ascensions(pct):
 def retrieve_activities():
     con = sqlite3.connect('strava.db')
     cur = con.cursor() 
-    st="SELECT name,ID,distance,moving_time,elevation,average_speed,max_speed,average_cadence,average_temp,gear_name,gear_distance,start_date_local from  activities where type = 'Ride' and sport_type='Ride'and distance>5000 and elevation > 10 and average_speed>1.66;"    
+    st="SELECT name,ID,distance,moving_time,elevation,average_speed,max_speed,average_cadence,average_temp,gear_name,gear_distance,start_date_local from  activities where type = 'Ride' and sport_type='Ride'and distance>5000 and elevation > 10 and average_speed>1.66  ORDER by start_date_local ASC;"    
     cur.execute(st)
     rows = cur.fetchall()
     con.close()

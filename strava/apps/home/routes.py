@@ -78,6 +78,38 @@ def dashboard():
     ascensions_labels=[row[3] for row in ascensions]
     return render_template('home/dashboard.html', segment='dashboard',distance=distance,moving_time=moving_time,elevation=elevation,average_speed=average_speed,max_speed=max_speed,average_cadence=average_cadence,average_temp=average_temp,gear_name=gear_name,gear_distance=gear_distance,activities_labels=activities_labels,ascensions_distance=ascensions_distance,ascensions_moving_time=ascensions_moving_time,ascensions_elevation=ascensions_elevation,ascensions_labels=ascensions_labels)
 
+blueprint.route('/stats')
+@blueprint.route('/stats.html')
+@login_required
+def stat():
+    pattern=request.args.get('pattern')
+    if pattern == None :
+        pattern=""
+    mode=request.args.get('mode')
+    if mode == None:
+        mode="like"
+    starred=request.args.get('starred')
+    if starred == None:
+        starred="false"
+
+    activities = ga.retrieve_activities()
+    ascensions =  ga.retrieve_ascensions(5)
+    distance =[row[2] for row in activities]
+    moving_time =[row[3] for row in activities]
+    elevation =[row[4] for row in activities]
+    average_speed=[row[5] for row in activities]
+    max_speed=[row[6] for row in activities]
+    average_cadence=[row[7] for row in activities]
+    average_temp=[row[8] for row in activities]
+    gear_name=[row[9] for row in activities]
+    gear_distance=[row[10] for row in activities]
+    activities_labels=[row[11] for row in activities]
+
+    ascensions_distance=[row[0] for row in ascensions]
+    ascensions_moving_time=[row[1] for row in ascensions]
+    ascensions_elevation=[row[2] for row in ascensions]
+    ascensions_labels=[row[3] for row in ascensions]
+    return render_template('home/stats.html', segment='stats',distance=distance,moving_time=moving_time,elevation=elevation,average_speed=average_speed,max_speed=max_speed,average_cadence=average_cadence,average_temp=average_temp,gear_name=gear_name,gear_distance=gear_distance,activities_labels=activities_labels,ascensions_distance=ascensions_distance,ascensions_moving_time=ascensions_moving_time,ascensions_elevation=ascensions_elevation,ascensions_labels=ascensions_labels)
 
 @blueprint.route('/list')
 @blueprint.route('/list.html')

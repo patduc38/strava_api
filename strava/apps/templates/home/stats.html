@@ -1,0 +1,236 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<script>                                
+    function reload_filtered_page() {
+        var text = document.getElementById('search-segment').value;      
+        starred=document.getElementById('starred').checked
+        var iframe = document.getElementById( "listframe" );
+        iframe.src = "/list?pattern="+text+"&starred="+starred+"&mode=like";
+    }
+
+    function updateShortcut() {
+        da=new Date()
+        dor=2017
+        var cblist=[]
+        for (var i=dor; i<=da.getFullYear();i++ ){
+            cb=document.getElementById("year"+i)
+            cb.checked=false            
+        }
+    }
+
+    function updateEndMin() {
+        updateShortcut()
+        var debd=document.getElementById('start')
+        if (debd.value == '') {
+            debd.value =''
+            return
+        }
+
+        var d=new Date(debd.value)
+        var min=new Date(debd.min)
+        var max=new Date(debd.max)
+        if (d < min) {
+            alert("Specified that is lower than minimum allowed date: "+min)
+            debd.value=''
+            return
+        } 
+        if (d > max) {
+            alert("Specified that is lower than maximum allowed date: "+max)
+            debd.value=''
+            return
+        } 
+        
+        document.getElementById('end').min=debd
+        
+    }
+
+    function updateStartMax() {
+        updateShortcut()
+        var endd=document.getElementById('end') 
+        if (endd.value == '') {
+            endd.value =''
+            return
+        }
+        var d=new Date(endd.value)
+        var min=new Date(endd.min)
+        var max=new Date(endd.max)
+        if (d < min) {
+            alert("Specified that is lower than minimum allowed date: "+min)
+            endd.value=''
+            return
+        } 
+        if (d > max) {
+            alert("Specified that is lower than maximum allowed date: "+max)
+            endd.value=''
+            return
+        } 
+        
+        document.getElementById('start').max=endd
+    }
+</script>
+
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card bg-yellow-100 border-0 shadow">
+                <div class="card-header d-sm-flex flex-row align-items-center flex-0">
+                    <div class="d-block mb-3 mb-sm-0">
+                        <div class="fs-5 fw-normal mb-2" id="segment-name"></div>
+                        <div class="small mt-2"> 
+                            <span class="fw-normal me-2">Best</span>                              
+                            <span class="text-success fw-bold" id="best-time"></span>
+                            <span class="fw-normal me-2">&nbsp;&nbsp; Worst</span>                              
+                            <span class="text-danger fw-bold" id="worst-time"></span>
+                            <span id="hidden-sid" style="visibility: hidden">5855232</span>
+                        </div>
+                    </div>
+                    <div class="d-block ms-auto">
+                        <label for="start">Start date:</label>
+                        <input type="date" id="start" name="start"
+                            value=""
+                            min="2017-01-01" max=""
+                            onBlur="updateEndMin();">
+
+                        <label for="end" style="margin: 0px 0px 0px 20px;">End date: </label>
+                        <input type="date" id="end" name="end"
+                                value=""
+                                min="2017-01-01"
+                                onBlur="updateStartMax(); ">
+                        <button type="submit"  id="button" onclick="updateSegmentInfo()">filter</button>
+                        <div class="small mt-2" id="year_shortcut"></div>
+
+                    </div>
+
+                </div>
+                <iframe  src=about:blank  id="graphframe" name="graphframe" height="470px" width="100%" title="Graph frame"></iframe>
+            </div>
+        </div>
+    
+   
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script>
+    function createShortcut() {
+        da=new Date()
+        dor=2017
+        dc=document.getElementById('year_shortcut')
+        var cblist=[]
+        for (var i=dor; i<=da.getFullYear();i++ ){
+            var newCheckbox = document.createElement("input");
+            newCheckbox.type = "checkbox";
+            newCheckbox.myparam=i
+            newCheckbox.id="year"+i
+            newCheckbox.addEventListener(
+                'change',
+                function(evt) { 
+                    
+                    if (this.checked == true) {
+                            for  (var j=dor-2017; j<=da.getFullYear()-2017;j++ ) {
+                                if (j+2017 != evt.currentTarget.myparam ) {
+                                    cblist[j].checked=false
+                                }
+                            }
+                            document.getElementById('start').value=evt.currentTarget.myparam+"-01-01"
+                            document.getElementById('start').max=(evt.currentTarget.myparam+1).toString()+"-01-01"
+                            document.getElementById('end').value=(evt.currentTarget.myparam+1).toString()+"-01-01"
+                            document.getElementById('end').min=evt.currentTarget.myparam+"-01-01"
+                            updateSegmentInfo()
+                        } else {
+                            document.getElementById('start').value=""
+                            document.getElementById('end').value=""
+                        }
+                    },
+            )
+
+            cblist.push(newCheckbox)
+
+            dc.appendChild(newCheckbox);
+            var label = document.createElement('label');
+            label.htmlFor = i;
+            label.appendChild(document.createTextNode(i));
+            label.style.paddingLeft="4px"
+            label.style.paddingRight="8px"
+            dc.appendChild(label);
+            }
+    }
+
+   createShortcut()
+
+    function getNbDays(year) {
+    const numberOfDays = new Date(year, 1, 29).getDate() === 29 ? 366 : 365;
+    return numberOfDays
+    }
+
+    function inFilteredDate(daa,activities_labels_filtered) {
+        var d=daa.format('D');
+        var m=daa.format('M');
+
+        for (var i=0; i<activities_labels_filtered.length; i++) {
+            var jour = new Date(activities_labels_filtered[i])
+            console.log("Pat Add  " + d+ "/"+m  +"/"+jour.getDate() + "/"+jour.getMonth() +"/"+jour.toString()+"/"+activities_labels_filtered[i])
+
+            if (jour.getDat() == d && jour.getMonth==m) {
+                return true
+            }
+        }
+        return false
+  }
+
+    distance={{ distance | safe }}
+    moving_time={{ moving_time | safe }}
+    elevation={{ elevation | safe }}
+    average_speed={{ average_speed | safe }}
+    max_speed={{ max_speed | safe }}
+    average_cadence={{ average_cadence | safe }}
+    r_average_cadence=average_cadence.filter(function(e){return e})
+    average_temp={{ average_temp | safe }}
+    gear_name={{ gear_name | safe }}
+    gear_distance={{ gear_distance | safe }}
+    activities_labels={{ activities_labels | safe }}
+    
+    var stats_dist=[]
+    distance_filtered=[]
+    activities_labels_filtered=[]
+         
+
+    for (i=0;i< activities_labels.length;i++) {
+        var dd = new Date(activities_labels[i])
+        if (dd.getFullYear() == "2022") {
+            activities_labels_filtered.push(activities_labels[i])
+            distance_filtered.push(distance[i])
+        }
+    }
+
+
+
+    last=1
+    for (i=0;i< activities_labels_filtered.length;i++) {
+        doy=moment(activities_labels_filtered[i]).dayOfYear();
+        console.log("Pat Add last doy"+ last + " | "+ doy + " | "+activities_labels_filtered[i])
+        for (j=last; j<doy; j++) {
+            stats_dist.push(0)
+        }
+        stats_dist.push(distance_filtered[i])
+        last=doy+1
+    }
+
+
+    cumdist=[]
+    cumdist.push(stats_dist[0])
+    for (var i=1;i<stats_dist.length;i++) {
+        cumdist.push(cumdist[i-1]+stats_dist[i]) 
+    }
+    console.log(" Pat Add " + cumdist)
+
+</script>
+{% endblock javascripts %}
