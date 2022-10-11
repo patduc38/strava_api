@@ -3,7 +3,11 @@
 {% block title %} Dashboard {% endblock %} 
 
 <!-- Specific Page CSS goes HERE  -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script> 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>
+
+{% endblock stylesheets %}
 
 {% block content %}
 
@@ -109,66 +113,12 @@
                     </div>
 
                 </div>
-                <iframe  src=about:blank  id="graphframe" name="graphframe" height="470px" width="100%" title="Graph frame"></iframe>
-            </div>
-        </div>
-    
-   
-
-{% endblock content %}
-
-<!-- Specific Page JS goes HERE  -->
-{% block javascripts %}
-<script>
-    function createShortcut() {
-        da=new Date()
-        dor=2017
-        dc=document.getElementById('year_shortcut')
-        var cblist=[]
-        for (var i=dor; i<=da.getFullYear();i++ ){
-            var newCheckbox = document.createElement("input");
-            newCheckbox.type = "checkbox";
-            newCheckbox.myparam=i
-            newCheckbox.id="year"+i
-            newCheckbox.addEventListener(
-                'change',
-                function(evt) { 
-                    
-                    if (this.checked == true) {
-                            for  (var j=dor-2017; j<=da.getFullYear()-2017;j++ ) {
-                                if (j+2017 != evt.currentTarget.myparam ) {
-                                    cblist[j].checked=false
-                                }
-                            }
-                            document.getElementById('start').value=evt.currentTarget.myparam+"-01-01"
-                            document.getElementById('start').max=(evt.currentTarget.myparam+1).toString()+"-01-01"
-                            document.getElementById('end').value=(evt.currentTarget.myparam+1).toString()+"-01-01"
-                            document.getElementById('end').min=evt.currentTarget.myparam+"-01-01"
-                            updateSegmentInfo()
-                        } else {
-                            document.getElementById('start').value=""
-                            document.getElementById('end').value=""
-                        }
-                    },
-            )
-
-            cblist.push(newCheckbox)
-
-            dc.appendChild(newCheckbox);
-            var label = document.createElement('label');
-            label.htmlFor = i;
-            label.appendChild(document.createTextNode(i));
-            label.style.paddingLeft="4px"
-            label.style.paddingRight="8px"
-            dc.appendChild(label);
-            }
-    }
-
-   createShortcut()
+                <canvas id="bar-chart"  height="450"></canvas>
+                <script>
 
     function getNbDays(year) {
-    const numberOfDays = new Date(year, 1, 29).getDate() === 29 ? 366 : 365;
-    return numberOfDays
+        const numberOfDays = new Date(year, 1, 29).getDate() === 29 ? 366 : 365;
+        return numberOfDays
     }
 
     function inFilteredDate(daa,activities_labels_filtered) {
@@ -231,6 +181,112 @@
         cumdist.push(cumdist[i-1]+stats_dist[i]) 
     }
     console.log(" Pat Add " + cumdist)
+
+
+    days=[]
+    for (var i=0;i<cumdist.length; i++){
+        days.push(i)
+    }
+    console.log("PAt Add days="+days)
+                    var ctx = document.getElementById("bar-chart").getContext("2d")
+                    var lineChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: days,
+                            datasets:[
+                                {
+                                label: "Temps d'ascension",
+                                data: cumdist,
+                                fill: false,
+                                borderColor: "rgb(75,192,192)",
+                                lineTension: 0.8,
+                                cubicInterpolationMode: 'monotone',
+                                }
+                            ]
+                        },                        
+                        options: {
+                            legend: {
+                                display: false //This will do the task
+                            },
+                            responsive: false,
+                            scales: {
+
+                                yAxes: [{
+                                    display: true,
+                                    scaleLabel: {
+                                    show: true
+                                    },
+                                    gridLines:{
+                                    color:"#ecedef"
+                                    },
+                                    ticks: {
+                                    beginAtZero:false,
+                                    fontColor:"#8f9092",                                
+                                    }
+                                }]
+
+                            },
+                            maintainAspectRatio: false               
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+    
+   
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script>
+    function createShortcut() {
+        da=new Date()
+        dor=2017
+        dc=document.getElementById('year_shortcut')
+        var cblist=[]
+        for (var i=dor; i<=da.getFullYear();i++ ){
+            var newCheckbox = document.createElement("input");
+            newCheckbox.type = "checkbox";
+            newCheckbox.myparam=i
+            newCheckbox.id="year"+i
+            newCheckbox.addEventListener(
+                'change',
+                function(evt) { 
+                    
+                    if (this.checked == true) {
+                            for  (var j=dor-2017; j<=da.getFullYear()-2017;j++ ) {
+                                if (j+2017 != evt.currentTarget.myparam ) {
+                                    cblist[j].checked=false
+                                }
+                            }
+                            document.getElementById('start').value=evt.currentTarget.myparam+"-01-01"
+                            document.getElementById('start').max=(evt.currentTarget.myparam+1).toString()+"-01-01"
+                            document.getElementById('end').value=(evt.currentTarget.myparam+1).toString()+"-01-01"
+                            document.getElementById('end').min=evt.currentTarget.myparam+"-01-01"
+                            updateSegmentInfo()
+                        } else {
+                            document.getElementById('start').value=""
+                            document.getElementById('end').value=""
+                        }
+                    },
+            )
+
+            cblist.push(newCheckbox)
+
+            dc.appendChild(newCheckbox);
+            var label = document.createElement('label');
+            label.htmlFor = i;
+            label.appendChild(document.createTextNode(i));
+            label.style.paddingLeft="4px"
+            label.style.paddingRight="8px"
+            dc.appendChild(label);
+            }
+    }
+
+   createShortcut()
+
+    
 
 </script>
 {% endblock javascripts %}
