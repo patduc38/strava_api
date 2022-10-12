@@ -113,7 +113,8 @@
                     </div>
 
                 </div>
-                <canvas id="bar-chart"  height="450"></canvas>
+
+<canvas id="line-chart" width="800" height="450"></canvas>
                 <script>
 
     function getNbDays(year) {
@@ -187,48 +188,31 @@
     for (var i=0;i<cumdist.length; i++){
         days.push(i)
     }
-    console.log("PAt Add days="+days)
-                    var ctx = document.getElementById("bar-chart").getContext("2d")
+   //days=[10,20,30]
+   //cumdist=[10,20,30]
+                    var ctx = document.getElementById("line-chart").getContext("2d")
                     var lineChart = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: days,
-                            datasets:[
-                                {
-                                label: "Temps d'ascension",
-                                data: cumdist,
-                                fill: false,
-                                borderColor: "rgb(75,192,192)",
-                                lineTension: 0.8,
-                                cubicInterpolationMode: 'monotone',
-                                }
-                            ]
-                        },                        
-                        options: {
-                            legend: {
-                                display: false //This will do the task
-                            },
-                            responsive: false,
-                            scales: {
+type: 'line',
+  data: {
+    labels: days,
+    datasets: [{ 
+        data: cumdist,
+        label: "Distance Cumulée",
+        borderColor: "#3e95cd",
+        pointRadius: 0,
+        fill: false
 
-                                yAxes: [{
-                                    display: true,
-                                    scaleLabel: {
-                                    show: true
-                                    },
-                                    gridLines:{
-                                    color:"#ecedef"
-                                    },
-                                    ticks: {
-                                    beginAtZero:false,
-                                    fontColor:"#8f9092",                                
-                                    }
-                                }]
+      } 
+    ]
+  },
+  options: {
+    title: {
+      display: true,
+      text: 'World population per region (in millions)'
+    }
+  }
+});
 
-                            },
-                            maintainAspectRatio: false               
-                        }
-                    });
                 </script>
             </div>
         </div>

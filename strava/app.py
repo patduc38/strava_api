@@ -67,4 +67,4 @@ def list():
     return render_template('list.html', names=json.dumps(names), ids=ids,starred=starred, pattern=pattern)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0',port=5000,debug=True)
