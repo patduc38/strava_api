@@ -11,7 +11,7 @@
 
 {% block content %}
 
-<script>                                
+<script>        
     function reload_filtered_page() {
         var text = document.getElementById('search-segment').value;      
         starred=document.getElementById('starred').checked
@@ -28,56 +28,6 @@
             cb.checked=false            
         }
     }
-
-    function updateEndMin() {
-        updateShortcut()
-        var debd=document.getElementById('start')
-        if (debd.value == '') {
-            debd.value =''
-            return
-        }
-
-        var d=new Date(debd.value)
-        var min=new Date(debd.min)
-        var max=new Date(debd.max)
-        if (d < min) {
-            alert("Specified that is lower than minimum allowed date: "+min)
-            debd.value=''
-            return
-        } 
-        if (d > max) {
-            alert("Specified that is lower than maximum allowed date: "+max)
-            debd.value=''
-            return
-        } 
-        
-        document.getElementById('end').min=debd
-        
-    }
-
-    function updateStartMax() {
-        updateShortcut()
-        var endd=document.getElementById('end') 
-        if (endd.value == '') {
-            endd.value =''
-            return
-        }
-        var d=new Date(endd.value)
-        var min=new Date(endd.min)
-        var max=new Date(endd.max)
-        if (d < min) {
-            alert("Specified that is lower than minimum allowed date: "+min)
-            endd.value=''
-            return
-        } 
-        if (d > max) {
-            alert("Specified that is lower than maximum allowed date: "+max)
-            endd.value=''
-            return
-        } 
-        
-        document.getElementById('start').max=endd
-    }
 </script>
 
 
@@ -87,35 +37,52 @@
                 <div class="card-header d-sm-flex flex-row align-items-center flex-0">
                     <div class="d-block mb-3 mb-sm-0">
                         <div class="fs-5 fw-normal mb-2" id="segment-name"></div>
-                        <div class="small mt-2"> 
-                            <span class="fw-normal me-2">Best</span>                              
-                            <span class="text-success fw-bold" id="best-time"></span>
-                            <span class="fw-normal me-2">&nbsp;&nbsp; Worst</span>                              
-                            <span class="text-danger fw-bold" id="worst-time"></span>
-                            <span id="hidden-sid" style="visibility: hidden">5855232</span>
-                        </div>
+                        <div class="small mt-2" id="year_shortcut"></div>
                     </div>
                     <div class="d-block ms-auto">
-                        <label for="start">Start date:</label>
-                        <input type="date" id="start" name="start"
-                            value=""
-                            min="2017-01-01" max=""
-                            onBlur="updateEndMin();">
-
-                        <label for="end" style="margin: 0px 0px 0px 20px;">End date: </label>
-                        <input type="date" id="end" name="end"
-                                value=""
-                                min="2017-01-01"
-                                onBlur="updateStartMax(); ">
-                        <button type="submit"  id="button" onclick="updateSegmentInfo()">filter</button>
-                        <div class="small mt-2" id="year_shortcut"></div>
-
+                        <form name="myForm">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="typeradio" id="typeradio1" value="Distance" checked>
+                                <label class="form-check-label" for="typeradio1">
+                                    Distance
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="typeradio" id="typeradio2" value="Dénivelé">
+                                <label class="form-check-label" for="typeradio2">
+                                    Dénivelé
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="typeradio" id="typeradio3" value="Nb de sorties" >
+                                <label class="form-check-label" for="typeradio3">
+                                    Nb de sorties
+                                </label>
+                            </div>
+                        </form>
                     </div>
-
-                </div>
+                </div>    
+            </div>
+        </div>
+    </div>
 
 <canvas id="line-chart" width="800" height="450"></canvas>
-                <script>
+
+<script>
+
+    var rad = document.myForm.typeradio;
+    var prev = null;
+    for (var i = 0; i < rad.length; i++) {
+        rad[i].addEventListener('change', function() {
+            if (this !== prev) {
+                prev = this;
+            }
+            console.log(this.value)
+            drawStats(this.value)
+        });
+    }
+
+
 
     function getNbDays(year) {
         const numberOfDays = new Date(year, 1, 29).getDate() === 29 ? 366 : 365;
@@ -128,8 +95,6 @@
 
         for (var i=0; i<activities_labels_filtered.length; i++) {
             var jour = new Date(activities_labels_filtered[i])
-            console.log("Pat Add  " + d+ "/"+m  +"/"+jour.getDate() + "/"+jour.getMonth() +"/"+jour.toString()+"/"+activities_labels_filtered[i])
-
             if (jour.getDat() == d && jour.getMonth==m) {
                 return true
             }
@@ -137,7 +102,7 @@
         return false
   }
 
-    distance={{ distance | safe }}
+    var distance={{ distance | safe }}
     moving_time={{ moving_time | safe }}
     elevation={{ elevation | safe }}
     average_speed={{ average_speed | safe }}
@@ -147,71 +112,85 @@
     average_temp={{ average_temp | safe }}
     gear_name={{ gear_name | safe }}
     gear_distance={{ gear_distance | safe }}
-    activities_labels={{ activities_labels | safe }}
+    var activities_labels={{ activities_labels | safe }}
     
-    var stats_dist=[]
-    distance_filtered=[]
-    activities_labels_filtered=[]
-         
+  
 
-    for (i=0;i< activities_labels.length;i++) {
-        var dd = new Date(activities_labels[i])
-        if (dd.getFullYear() == "2022") {
-            activities_labels_filtered.push(activities_labels[i])
-            distance_filtered.push(distance[i])
+    function prepareYear(year, type) {
+       
+        var stats_dist=[]
+        var stat_filtered=[]
+        var activities_labels_filtered=[]
+        switch (type) {
+            case "Distance":
+                metric=distance;
+                break;
+            case "Dénivelé":
+                metric=elevation;
+                break;
+            case "Nb de sorties":
+                metric=distance
+                break;
+            default:
+                metric=distance;
         }
-    }
 
-
-
-    last=1
-    for (i=0;i< activities_labels_filtered.length;i++) {
-        doy=moment(activities_labels_filtered[i]).dayOfYear();
-        console.log("Pat Add last doy"+ last + " | "+ doy + " | "+activities_labels_filtered[i])
-        for (j=last; j<doy; j++) {
-            stats_dist.push(0)
+        for (i=0;i< activities_labels.length;i++) {
+            var dd = new Date(activities_labels[i])
+            if (dd.getFullYear() == year) {
+                activities_labels_filtered.push(activities_labels[i])
+                stat_filtered.push(metric[i])
+            }
         }
-        stats_dist.push(distance_filtered[i])
-        last=doy+1
+
+        last=1
+        for (i=0;i< activities_labels_filtered.length;i++) {
+            doy=moment(activities_labels_filtered[i]).dayOfYear();
+            for (j=last; j<doy; j++) {
+                stats_dist.push(0)
+            }
+            if (type == "Distance") {
+                stats_dist.push(Math.round(stat_filtered[i]/1000))
+            } else if (type == "Nb de sorties") {
+                stats_dist.push(1)
+            } else {
+                stats_dist.push(stat_filtered[i])
+            }
+            last=doy+1
+        }
+
+
+        cumdist=[]
+        cumdist.push(stats_dist[0])
+        for (var i=1;i<stats_dist.length;i++) {
+            cumdist.push(cumdist[i-1]+stats_dist[i]) 
+        }
+
+        console.log("Pat Add cumdist")
+
+        days=[]
+        j=0
+        var i
+        for (i=0;i<getNbDays(year); i++){
+            j++
+            m=moment(year+"-"+j, "YYYY-MM")
+            t=m.daysInMonth()
+            days.push(m.format('DD MMM'))
+            for (k=2;k<=t;k++) {
+                days.push("")
+                i=i+1            
+            }
+        }
+
+        var myObject = new Object();
+        myObject.days = days;
+        myObject.cumdist = cumdist;
+        return myObject;
     }
+    
+    
 
-
-    cumdist=[]
-    cumdist.push(stats_dist[0])
-    for (var i=1;i<stats_dist.length;i++) {
-        cumdist.push(cumdist[i-1]+stats_dist[i]) 
-    }
-    console.log(" Pat Add " + cumdist)
-
-
-    days=[]
-    for (var i=0;i<cumdist.length; i++){
-        days.push(i)
-    }
-   //days=[10,20,30]
-   //cumdist=[10,20,30]
-                    var ctx = document.getElementById("line-chart").getContext("2d")
-                    var lineChart = new Chart(ctx, {
-type: 'line',
-  data: {
-    labels: days,
-    datasets: [{ 
-        data: cumdist,
-        label: "Distance Cumulée",
-        borderColor: "#3e95cd",
-        pointRadius: 0,
-        fill: false
-
-      } 
-    ]
-  },
-  options: {
-    title: {
-      display: true,
-      text: 'World population per region (in millions)'
-    }
-  }
-});
+    var lineChart 
 
                 </script>
             </div>
@@ -224,53 +203,105 @@ type: 'line',
 <!-- Specific Page JS goes HERE  -->
 {% block javascripts %}
 <script>
-    function createShortcut() {
-        da=new Date()
-        dor=2017
-        dc=document.getElementById('year_shortcut')
-        var cblist=[]
-        for (var i=dor; i<=da.getFullYear();i++ ){
-            var newCheckbox = document.createElement("input");
-            newCheckbox.type = "checkbox";
-            newCheckbox.myparam=i
-            newCheckbox.id="year"+i
-            newCheckbox.addEventListener(
-                'change',
-                function(evt) { 
-                    
-                    if (this.checked == true) {
-                            for  (var j=dor-2017; j<=da.getFullYear()-2017;j++ ) {
-                                if (j+2017 != evt.currentTarget.myparam ) {
-                                    cblist[j].checked=false
-                                }
-                            }
-                            document.getElementById('start').value=evt.currentTarget.myparam+"-01-01"
-                            document.getElementById('start').max=(evt.currentTarget.myparam+1).toString()+"-01-01"
-                            document.getElementById('end').value=(evt.currentTarget.myparam+1).toString()+"-01-01"
-                            document.getElementById('end').min=evt.currentTarget.myparam+"-01-01"
-                            updateSegmentInfo()
-                        } else {
-                            document.getElementById('start').value=""
-                            document.getElementById('end').value=""
-                        }
-                    },
-            )
-
-            cblist.push(newCheckbox)
-
-            dc.appendChild(newCheckbox);
-            var label = document.createElement('label');
-            label.htmlFor = i;
-            label.appendChild(document.createTextNode(i));
-            label.style.paddingLeft="4px"
-            label.style.paddingRight="8px"
-            dc.appendChild(label);
+    var cblist = []
+    var type="elevation"
+    function getRandomColorHex() {
+            var hex = "0123456789ABCDEF",
+                color = "#";
+            for (var i = 1; i <= 6; i++) {
+                color += hex[Math.floor(Math.random() * 16)];
             }
-    }
+            return color;
+        }
 
-   createShortcut()
+        var color = ["Red", "Blue", "DarkTurquoise", "Brown", "GreenYellow", "DarkOrange", "Black", "Gray", "DeepPink", "DodgerBlue", "Gold", "LightBlue", "turquoise"]
 
-    
+        function drawStats(type) {
+            var da = new Date()
+            var dor = 2017
+            dc = document.getElementById('year_shortcut')
+                        var year = []
+                        for (var j = dor - 2017; j <= da.getFullYear() - 2017; j++) {
+                            if (cblist[j].checked) {
+                                year.push(2017 + j)
+                            }
+                        }
+
+                        var val = []
+                        var dslist = []
+                        for (j = 0; j < year.length; j++) {
+                            var v = prepareYear(year[j],type)
+                            val.push(v)
+                            dslist.push({
+                                data: v.cumdist,
+                                label: year[j],
+                                borderColor: color[year[j] - 2017],
+                                pointRadius: 0,
+                                fill: false
+                            })
+
+                        }
+
+                        var ctx = document.getElementById("line-chart").getContext("2d")
+                        if (lineChart != null) {
+                            lineChart.destroy();
+                        }
+                        lineChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: val[0].days,
+                                datasets: dslist,
+                            },
+                            options: {
+                                title: {
+                                    display: true,
+                                    text: type
+                                },
+                                scales: {
+                                    xAxes: [{
+                                        ticks: {
+                                            autoSkip: false
+                                        }
+                                    }]
+                                }
+
+                            }
+                        });
+
+        }
+
+        function createShortcut() {
+            da = new Date()
+            dor = 2017
+            dc = document.getElementById('year_shortcut')
+            for (var i = dor; i <= da.getFullYear(); i++) {
+                var newCheckbox = document.createElement("input");
+                newCheckbox.type = "checkbox";
+                newCheckbox.myparam = i
+                newCheckbox.id = "year" + i
+                newCheckbox.addEventListener(
+                    'change',
+                    function (evt) {
+                        radio=document.myForm.typeradio
+                        console.log("Pat Add ", radio)
+                        drawStats(radio.value)
+                    },
+                )
+
+                cblist.push(newCheckbox)
+
+                dc.appendChild(newCheckbox);
+                var label = document.createElement('label');
+                label.htmlFor = i;
+                label.appendChild(document.createTextNode(i));
+                label.style.paddingLeft = "4px"
+                label.style.paddingRight = "8px"
+                dc.appendChild(label);
+            }
+        }
+
+        createShortcut()
+
 
 </script>
 {% endblock javascripts %}
