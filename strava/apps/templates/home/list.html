@@ -27,11 +27,10 @@
 <body style="height:100%">
 <div class="table-responsive">
     <!--div class="tbodyDiv"-->
-        <table class="table align-items-center table-flush" id="segments-table">
+        <table class="table align-items-center table-flush" id="segments-table" style="background-color: white">
             <thead class="thead-light">
             <tr>
-                <th class="border-bottom" style="padding-left: 8px" scope="col">Segment</th>
-                <th class="border-bottom" style="padding-left: 8px" scope="col">link</th>
+                <th class="border-bottom" style="padding-left: 8px; color:darkgray; font-weight: bold; background-color: white;" scope="col">Nom du segment</th><th class="border-bottom" style="padding-left: 8px; background-color: white;" scope="col"></th>
             </tr>
             </thead>
 
@@ -41,6 +40,8 @@
         </table>
     <!--div-->
 </div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 
 <script>
       function updateShortcutParent() {
@@ -53,7 +54,25 @@
         }
     }
 
-    function navigate(url, name)
+    updatestarred = function(sid,starred,i){
+        if (starred[i] =='True') {
+            starred[i]='False'
+        } else {
+            starred[i]='True'
+        }
+        $.ajax({
+            type: 'POST',
+            url: '/execute_command?sid='+sid+'&starred='+starred[i],
+            data: {},
+            success: function(response) {
+                console.log(response); // Do something with the response if needed
+            }
+        });
+      console.log("Pat Add on ajoute :", sid, starred)
+    }
+
+
+    function navigate(url, name, sid)
                     {
                         var iframe = window.parent.document.getElementsByName( "graphframe" )[0];
                         iframe.src = url;
@@ -61,16 +80,29 @@
                         sn.innerText=name
                         sn = window.parent.document.getElementById("nom-segment");
                         sn.innerText=name
+                        sn = window.parent.document.getElementById("strava-link");
+                         
+                 
+                        // Create the text node for anchor element.
+                        var link = window.parent.document.createTextNode("(strava segment)");                        
+                        // Append the text node to anchor element.
+                        sn.textContent="(strava segment)";                         
+                        // Set the title.
+                        sn.title = "strava segment"; 
+                        sn.target="_blank"
+                        // Set the href property.
+                        sn.href = "https://www.strava.com/segments/" +sid;         
                     }
 
 
                     //document.getElementById('text').value="{{pattern|safe}}" 
                     //starcheckbox=document.getElementById('starred')
-                    starred={{starred|safe}}
                     //starcheckbox.checked=starred
                     names={{names|safe}}
                     ids={{ids|safe}}
-                    
+                    starred={{starred|safe}}
+
+
                     tbody=document.getElementById('segments-table-body')
                     content=""
                     for (var i=0 ;i<names.length;i++) {
@@ -81,11 +113,20 @@
                         var newCell = newRow.insertCell();
                         var newText = document.createTextNode(name);
                         a.appendChild(newText)
-                        a.href='javascript:navigate("/graph?sid=' + ids[i] + '&name='+ qname+'","'+name+'"); updateShortcutParent()'
+                        a.href='javascript:navigate("/graph?sid=' + ids[i] + '&name='+ qname+'","'+name+ '","'+ids[i]+'"); updateShortcutParent()'
                         newCell.appendChild(a);
-                        newCell = newRow.insertCell();
-                        newText = document.createTextNode("links   bangs");
-                        newCell.appendChild(newText);
+                        newCell = newRow.insertCell();     
+                        newCell.innerHTML='<input type="checkbox" class="star" id="starred_'+i+'" name="starred">';
+                        cb_i=document.getElementById('starred_'+i)
+                        if (starred[i]=="True") {
+                            cb_i.checked=true
+                        } else {
+                            cb_i.checked=false
+                        }
+
+                        cb_i.addEventListener('click', function(sid,starred,i){
+                            return function(){updatestarred(sid,starred,i)}
+                            }(ids[i],starred,i));
                     }
     </script>
     

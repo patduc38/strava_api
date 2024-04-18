@@ -29,3 +29,6 @@ class CreateAccountForm(FlaskForm):
     password = PasswordField('Password',
                              id='pwd_create',
                              validators=[DataRequired()])
+    id = StringField('Id',
+                             id='id_create',
+                             validators=[DataRequired()])

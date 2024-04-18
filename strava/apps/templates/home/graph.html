@@ -3,7 +3,10 @@
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}{% endblock stylesheets %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script> 
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script--> 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
+
 {% block content %}
  <div class="card-body p-2">
         <canvas id="bar-chart"  height="450"></canvas>
@@ -41,6 +44,7 @@
                         sid={{ sid | safe}}
                         distance={{ distance | safe}}
                         elevation={{ elevation | safe}}
+                        name="{{name}}"
 
                         if (name != "") {
                             var color = values.map(x => 'rgba(75,192,192,0.4)'); 
@@ -105,6 +109,27 @@
                         nbasc=window.parent.document.getElementById("vitesse-ascension-moyenne")
                         nbasc.innerText=(3.6*distance/average_time).toFixed(1)+"km/h"
 
+                        const annotation = {
+                            type: 'line',
+                            borderColor: 'black',
+                            borderDash: [6, 6],
+                            borderDashOffset: 0,
+                            borderWidth: 1,
+                            label: {
+                                display: true,
+                                content: (ctx) => convertHMS(average(ctx)),
+                                position: 'start'
+                            },
+                            scaleID: 'y',
+                            value: (ctx) => average(ctx)
+                            };
+
+
+                            function average(ctx) {
+                                const values = ctx.chart.data.datasets[0].data;
+                                return values.reduce((a, b) => a + b, 0) / values.length;
+                            }           
+
                     var ctx = document.getElementById("bar-chart").getContext("2d")
                     var lineChart = new Chart(ctx, {
                         type: 'line',
@@ -115,7 +140,8 @@
                                 label: "Temps d'ascension",
                                 data: kvalues,
                                 fill: false,
-                                borderColor: "rgb(75,192,192)",
+                                borderColor: "rgb(0,191,255)",
+                                borderWidth: 1,
                                 pointBackgroundColor: color,
                                 lineTension: 0.8,
                                 cubicInterpolationMode: 'monotone',
@@ -129,7 +155,7 @@
                             responsive: true,
                             scales: {
 
-                                yAxes: [{
+                                y: {
                                     display: true,
                                     scaleLabel: {
                                     show: true
@@ -144,11 +170,34 @@
                                             return convertHMS(value);
                                     }
                                     }
-                                }]
+                                }
 
                             },
-                            maintainAspectRatio: false               
-                        }
+                            maintainAspectRatio: false,
+                            plugins: {
+                                annotation: {
+                                    annotations: {
+                                    annotation
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed.y !== null) {
+                                                label +=convertHMS(context.parsed.y);
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }               
+                        },
+
                     });
                 }
             </script>

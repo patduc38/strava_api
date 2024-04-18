@@ -1,0 +1,215 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} work in progress {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+<link rel='stylesheet' href='static/assets/css/bootstrap.css'>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+{% endblock stylesheets %}
+
+{% block content %}
+
+<head>
+
+  <style>
+    tr.collapse.in {
+      display: table-row;
+    }
+    
+    .expandable-row:not(.collapsed) {
+        color: white;
+        background-color: DeepSkyBlue;
+    }
+
+    .hiddenRow {
+      padding: 0 !important;
+    }
+  </style>
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js'></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/static/assets//Leaflet.encoded/Polyline.encoded.js"></script>
+
+</head>
+
+<script>
+  rpp = 15
+  currentPage = 1
+  count = {{ count | safe }}
+  totalPages = Math.trunc(count / rpp) + 1
+  activities = []
+
+  function createTableRows(activities) {
+    let accordionHTML = `<div style="overflow-y: auto, height:100px"> <table  class="table table-condensed table-striped" >
+    <thead>
+        <tr>
+          <th></th>
+          <th style="font-size: 0.6rem;">Date</th>
+          <th style="font-size: 0.6rem;">Distance</th>
+          <th style="font-size: 0.6rem;">Temps</th>
+          <th style="font-size: 0.6rem;">Dénivelé</th>
+        </tr>
+    </thead>
+    <tbody style="">   
+`;
+    activities.forEach((item, index) => {
+      t = item[3]
+      h = Math.floor(t / 3600)
+      t = t % 3600
+      m = Math.floor(t / 60)
+      t = t % 60
+      accordionHTML += `
+          <!--tr data-bs-toggle="collapse" data-bs-target="#demop${index}" class="accordion-toggle expandable-row"-->
+          <tr data-toggle="collapse" data-target="#demop${index}" class="accordion-toggle expandable-row pat_table" style="background-color: #FFFFFF;">  
+            <td >${item[0]}</td>
+            <td >${new Date(item[11]).toLocaleString('fr-FR', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+      })}
+            </td>
+            <td >${(item[2] / 1000).toFixed(2)} km</td>
+            <td >${h}h${m}m${t}s</td>
+            <td >${item[4]} m</td>
+          </tr>
+          <tr>
+              <td colspan="5" class="hiddenRow">
+                <div id="demop${index}" class="accordion-body collapse" data-bs-parent="#accordionExample">
+                  <div id="mapDiv${index}" style="width: 100%; height: 400px"></div>
+                </div>
+              </td>
+          </tr>
+          `;
+    });
+    accordionHTML += `</tbody>
+</table></div>
+`
+    return accordionHTML
+  }
+
+  function createMapRows(activities) {
+    //activities.forEach((item, index) => 
+    for (i = 0; i < activities.length; i++) {
+      index = i;
+      item = activities[i]
+      var encoded = activities[i][12];
+      var scr = document.createElement('script');
+      scr.innerHTML = `
+                  var map${index} = new L.Map(mapDiv${index}, {scrollWheelZoom: false
+});
+                                  L.tileLayer(
+                                      'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                      {
+                                          attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+                                          maxZoom: 18
+                                      }
+                                  ).addTo(map${index});
+                  var  encoded${index} = '${encoded}'                  
+                  
+                  var polyline${index} = L.Polyline.fromEncoded(encoded${index});
+                  polyline${index}.addTo(map${index})
+                                
+                  map${index}.fitBounds(polyline${index}.getBounds());
+
+                  // woraround to correctly disply leaflet tiles in an accordion
+                  var resizeObserver${index} = new ResizeObserver(() => {
+                    map${index}.invalidateSize();
+                    map${index}.fitBounds(polyline${index}.getBounds());
+                  });
+                  resizeObserver${index}.observe(mapDiv${index});
+                  
+                  `
+      document.body.appendChild(scr);
+    };
+  }
+
+  function loadPage(pageNumber) {
+    if (pageNumber == 0) {
+      pageNumber = 1
+    } else if (pageNumber >= totalPages) {
+      pageNumber = totalPages
+    }
+    currentPage = pageNumber
+    $.ajax({
+      url: 'dashtry.html?limit=' + rpp + '&offset=' + (pageNumber - 1) * rpp,
+      dataType: 'application/json',
+      complete: function (data) {
+        activities = data.responseText;
+        activities = JSON.parse(activities);
+        for (i = 0; i < activities.length; i++) {
+          activities[i][12] = activities[i][12].replace(/\\/g, "\\\\")
+        }
+        console.log(currentPage)
+        accordionHTML = createTableRows(activities);
+        table = document.getElementById('tablerow');
+        table.innerHTML = accordionHTML;
+        createMapRows(activities);
+      },
+      success: function (data) {
+        activities = data.responseText;
+        activities = JSON.parse(activities);
+        for (i = 0; i < activities.length; i++) {
+          activities[i][12] = activities[i][12].replace(/\\/g, "\\\\")
+        }
+      }
+    })
+
+    document.getElementById("page_number").innerHTML = "&nbsp;&nbsp; <span style='font-size: smaller;'> (page " + currentPage + "/" + totalPages + ")</span>"
+  }
+
+</script>
+
+
+<body>
+
+
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      Activités
+    </div>
+    <div class="panel-body">
+      <div id="tablerow" style="height:450px; overflow-y: auto; "></div>
+    </div>
+  </div>
+
+  </div>
+  <div style="display: flex; align-items: center; margin-top: 10px; flex-direction: row; ">
+    Nombre d'activités:
+    <select class="form-select form-select-sm" style="width:60px" aria-label=".form-select-sm" onchange="rpp = this.value;currentPage = 1;totalPages = Math.trunc(count / rpp) + 1;loadPage(1)">
+      <option value="15" selected>15</option>
+      <option value="30">30</option>
+      <option value="50">50</option>
+    </select>
+    &nbsp;&nbsp;
+    <ul class="pagination">
+      <li class="page-item">
+        <a class="page-link" href="#" onclick="loadPage(1)">
+          <span style="font-size: x-small;">|</span>&lt;
+      </a>
+      </li>
+      <li class="page-item"><a class="page-link" href="#" onclick="loadPage(currentPage - 1)">&lt;</a></li>
+      <li class="page-item"><a class="page-link" href="#" onclick="loadPage(currentPage + 1)">&gt;</a></li>
+      <li class="page-item">
+        <a class="page-link" href="#" aria-label="First" onclick="loadPage(totalPages)">
+          &gt;<span style="font-size: x-small;">|</span> 
+        </a>
+      </li>
+    </ul>
+    <div id="page_number"> </div>
+  </div>
+
+  <script>
+    loadPage(1)
+  </script>
+</body>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}

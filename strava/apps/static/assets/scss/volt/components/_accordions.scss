@@ -5,6 +5,7 @@
 
 .accordion-button {
     text-align: left;
+    display: block;   
     &:not(.collapsed) {
         &::after {
           background-image: none;

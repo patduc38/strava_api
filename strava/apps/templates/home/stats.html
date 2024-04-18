@@ -1,84 +1,88 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Dashboard {% endblock %} 
+{% block title %} Dashboard {% endblock %}
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script> 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
+<style>
+    .btn+.btn-outline-primary {
+        color: black;
+        background-color: white;
+        border-color: #1F2937;
+    }
 
+    .btn-check:checked+.btn-outline-primary,
+    .btn-check:active+.btn-outline-primary,
+    .btn-outline-primary:active,
+    .btn-outline-primary.active,
+    .btn-outline-primary.dropdown-toggle.show {
+        color: #ffffff;
+        background-color: deepskyblue;
+        border-color: #1F2937;
+    }
+</style>
 {% endblock stylesheets %}
 
 {% block content %}
 
-<script>        
+<script>
     function reload_filtered_page() {
-        var text = document.getElementById('search-segment').value;      
-        starred=document.getElementById('starred').checked
-        var iframe = document.getElementById( "listframe" );
-        iframe.src = "/list?pattern="+text+"&starred="+starred+"&mode=like";
+        var text = document.getElementById('search-segment').value;
+        starred = document.getElementById('starred').checked
+        var iframe = document.getElementById("listframe");
+        iframe.src = "/list?pattern=" + text + "&starred=" + starred + "&mode=like";
     }
 
     function updateShortcut() {
-        da=new Date()
-        dor=2017
-        var cblist=[]
-        for (var i=dor; i<=da.getFullYear();i++ ){
-            cb=document.getElementById("year"+i)
-            cb.checked=false            
+        da = new Date()
+        dor = 2017
+        var cblist = []
+        for (var i = dor; i <= da.getFullYear(); i++) {
+            cb = document.getElementById("year" + i)
+            cb.checked = false
         }
     }
 </script>
 
 
-    <div class="row">
-        <div class="col-12 mb-4">
-            <div class="card bg-yellow-100 border-0 shadow">
-                <div class="card-header d-sm-flex flex-row align-items-center flex-0">
-                    <div class="d-block mb-3 mb-sm-0">
-                        <div class="fs-5 fw-normal mb-2" id="segment-name"></div>
-                        <div class="small mt-2" id="year_shortcut"></div>
-                    </div>
-                    <div class="d-block ms-auto">
-                        <form name="myForm">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="typeradio" id="typeradio1" value="Distance">
-                                <label class="form-check-label" for="typeradio1">
-                                    Distance
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="typeradio" id="typeradio2" value="Dénivelé" checked>
-                                <label class="form-check-label" for="typeradio2">
-                                    Dénivelé
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="typeradio" id="typeradio3" value="Nb de sorties" >
-                                <label class="form-check-label" for="typeradio3">
-                                    Nb de sorties
-                                </label>
-                            </div>
-                        </form>
-                    </div>
-                </div>    
-                <canvas id="line-chart" width="800" height="400"></canvas>
-
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card bg-yellow-100 border-0 shadow">
+            <div class="card-header d-sm-flex flex-row align-items-center flex-0">
+                <div class="d-block mb-3 mb-sm-0">
+                    <div class="fs-5 fw-normal mb-2" id="segment-name"></div>
+                    <div class="small mt-2" id="year_shortcut"></div>
+                </div>
+                <div class="d-block ms-auto">
+                    <form name="myForm">
+                        <input type="radio" class="btn-check" name="stat_type" id="deniv" autocomplete="off" checked  value="Dénivelé">
+                        <label class="btn btn-outline-primary btn-sm" for="deniv">dénivelé</label>
+                        <input type="radio" class="btn-check" name="stat_type" id="distance" autocomplete="off"  value="Distance">
+                        <label class="btn btn-outline-primary btn-sm" for="distance">distance</label>
+                        <input type="radio" class="btn-check" name="stat_type" id="sortie" autocomplete="off" value="Nb de sorties">
+                        <label class="btn btn-outline-primary btn-sm" for="sortie"># sorties</label>
+                    </form>
+                </div>
             </div>
+            <canvas id="line-chart" width="800" height="400"></canvas>
+
         </div>
     </div>
+</div>
 
 
 <script>
 
-    var rad = document.myForm.typeradio;
+    var rad = document.myForm.stat_type;
     var prev = null;
     for (var i = 0; i < rad.length; i++) {
-        rad[i].addEventListener('change', function() {
+        rad[i].addEventListener('change', function () {
             if (this !== prev) {
                 prev = this;
             }
-            console.log(this.value)
+            console.log("Pat Add delete"+this.value)
             drawStats(this.value)
         });
     }
@@ -90,53 +94,53 @@
         return numberOfDays
     }
 
-    function inFilteredDate(daa,activities_labels_filtered) {
-        var d=daa.format('D');
-        var m=daa.format('M');
+    function inFilteredDate(daa, activities_labels_filtered) {
+        var d = daa.format('D');
+        var m = daa.format('M');
 
-        for (var i=0; i<activities_labels_filtered.length; i++) {
+        for (var i = 0; i < activities_labels_filtered.length; i++) {
             var jour = new Date(activities_labels_filtered[i])
-            if (jour.getDat() == d && jour.getMonth==m) {
+            if (jour.getDat() == d && jour.getMonth == m) {
                 return true
             }
         }
         return false
-  }
+    }
 
-    var distance={{ distance | safe }}
-    moving_time={{ moving_time | safe }}
-    elevation={{ elevation | safe }}
-    average_speed={{ average_speed | safe }}
-    max_speed={{ max_speed | safe }}
-    average_cadence={{ average_cadence | safe }}
-    r_average_cadence=average_cadence.filter(function(e){return e})
-    average_temp={{ average_temp | safe }}
-    gear_name={{ gear_name | safe }}
-    gear_distance={{ gear_distance | safe }}
-    var activities_labels={{ activities_labels | safe }}
-    
-  
+    var distance = {{ distance | safe }}
+    moving_time = {{ moving_time | safe }}
+    elevation = {{ elevation | safe }}
+    average_speed = {{ average_speed | safe }}
+    max_speed = {{ max_speed | safe }}
+    average_cadence = {{ average_cadence | safe }}
+    r_average_cadence = average_cadence.filter(function (e) { return e })
+    average_temp = {{ average_temp | safe }}
+    gear_name = {{ gear_name | safe }}
+    gear_distance = {{ gear_distance | safe }}
+    var activities_labels = {{ activities_labels | safe }}
+
+
 
     function prepareYear(year, type) {
-       
-        var stats_dist=[]
-        var stat_filtered=[]
-        var activities_labels_filtered=[]
+
+        var stats_dist = []
+        var stat_filtered = []
+        var activities_labels_filtered = []
         switch (type) {
             case "Distance":
-                metric=distance;
+                metric = distance;
                 break;
             case "Dénivelé":
-                metric=elevation;
+                metric = elevation;
                 break;
             case "Nb de sorties":
-                metric=distance
+                metric = distance
                 break;
             default:
-                metric=distance;
+                metric = distance;
         }
 
-        for (i=0;i< activities_labels.length;i++) {
+        for (i = 0; i < activities_labels.length; i++) {
             var dd = new Date(activities_labels[i])
             if (dd.getFullYear() == year) {
                 activities_labels_filtered.push(activities_labels[i])
@@ -144,42 +148,42 @@
             }
         }
 
-        last=1
-        for (i=0;i< activities_labels_filtered.length;i++) {
-            doy=moment(activities_labels_filtered[i]).dayOfYear();
-            for (j=last; j<doy; j++) {
+        last = 1
+        for (i = 0; i < activities_labels_filtered.length; i++) {
+            doy = moment(activities_labels_filtered[i]).dayOfYear();
+            for (j = last; j < doy; j++) {
                 stats_dist.push(0)
             }
             if (type == "Distance") {
-                stats_dist.push(Math.round(stat_filtered[i]/1000))
+                stats_dist.push(Math.round(stat_filtered[i] / 1000))
             } else if (type == "Nb de sorties") {
                 stats_dist.push(1)
             } else {
                 stats_dist.push(stat_filtered[i])
             }
-            last=doy+1
+            last = doy + 1
         }
 
 
-        cumdist=[]
+        cumdist = []
         cumdist.push(stats_dist[0])
-        for (var i=1;i<stats_dist.length;i++) {
-            cumdist.push(cumdist[i-1]+stats_dist[i]) 
+        for (var i = 1; i < stats_dist.length; i++) {
+            cumdist.push(cumdist[i - 1] + stats_dist[i])
         }
 
         console.log("Pat Add cumdist")
 
-        days=[]
-        j=0
+        days = []
+        j = 0
         var i
-        for (i=0;i<getNbDays(year); i++){
+        for (i = 0; i < getNbDays(year); i++) {
             j++
-            m=moment(year+"-"+j, "YYYY-MM")
-            t=m.daysInMonth()
+            m = moment(year + "-" + j, "YYYY-MM")
+            t = m.daysInMonth()
             days.push(m.format('DD MMM'))
-            for (k=2;k<=t;k++) {
+            for (k = 2; k <= t; k++) {
                 days.push("")
-                i=i+1            
+                i = i + 1
             }
         }
 
@@ -188,16 +192,16 @@
         myObject.cumdist = cumdist;
         return myObject;
     }
-    
-    
 
-    var lineChart 
 
-                </script>
-            </div>
-        </div>
-    
-   
+
+    var lineChart
+
+</script>
+</div>
+</div>
+
+
 
 {% endblock content %}
 
@@ -205,107 +209,115 @@
 {% block javascripts %}
 <script>
     var cblist = []
-    var type="elevation"
+    var type = "elevation"
     function getRandomColorHex() {
-            var hex = "0123456789ABCDEF",
-                color = "#";
-            for (var i = 1; i <= 6; i++) {
-                color += hex[Math.floor(Math.random() * 16)];
-            }
-            return color;
+        var hex = "0123456789ABCDEF",
+            color = "#";
+        for (var i = 1; i <= 6; i++) {
+            color += hex[Math.floor(Math.random() * 16)];
         }
+        return color;
+    }
 
-        var color = ["Red", "Blue", "DarkTurquoise", "Brown", "GreenYellow", "DarkOrange", "Black", "Gray", "DeepPink", "DodgerBlue", "Gold", "LightBlue", "turquoise"]
+    var color = ["Red", "Blue", "DarkTurquoise", "Brown", "GreenYellow", "DarkOrange", "Black", "Gray", "DeepPink", "DodgerBlue", "Gold", "LightBlue", "turquoise"]
 
-        function drawStats(type) {
-            var da = new Date()
-            var dor = 2017
-                        var year = []
-                        for (var j = dor - 2017; j <= da.getFullYear() - 2017; j++) {
-                            if (cblist[j].checked) {
-                                year.push(2017 + j)
-                            }
-                        }
-
-                        var val = []
-                        var dslist = []
-                        if (year.length==0) {
-                            year.push(da.getFullYear())
-                            cblist[cblist.length-1].checked=true
-                        }
-                        for (j = 0; j < year.length; j++) {
-                            var v = prepareYear(year[j],type)
-                            val.push(v)
-                            dslist.push({
-                                data: v.cumdist,
-                                label: year[j],
-                                borderColor: color[year[j] - 2017],
-                                pointRadius: 0,
-                                fill: false
-                            })
-
-                        }
-
-                        var ctx = document.getElementById("line-chart").getContext("2d")
-                        if (lineChart != null) {
-                            lineChart.destroy();
-                        }
-                        lineChart = new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: val[0].days,
-                                datasets: dslist,
-                            },
-                            options: {
-                                title: {
-                                    display: true,
-                                    text: type
-                                },
-                                scales: {
-                                    xAxes: [{
-                                        ticks: {
-                                            autoSkip: false
-                                        }
-                                    }]
-                                }
-
-                            }
-                        });
-
-        }
-
-        function createShortcut() {
-            da = new Date()
-            dor = 2017
-            dc = document.getElementById('year_shortcut')
-            for (var i = dor; i <= da.getFullYear(); i++) {
-                var newCheckbox = document.createElement("input");
-                newCheckbox.type = "checkbox";
-                newCheckbox.myparam = i
-                newCheckbox.id = "year" + i
-                newCheckbox.addEventListener(
-                    'change',
-                    function (evt) {
-                        radio=document.myForm.typeradio
-                        console.log("Pat Add ", radio)
-                        drawStats(radio.value)
-                    },
-                )
-
-                cblist.push(newCheckbox)
-
-                dc.appendChild(newCheckbox);
-                var label = document.createElement('label');
-                label.htmlFor = i;
-                label.appendChild(document.createTextNode(i));
-                label.style.paddingLeft = "4px"
-                label.style.paddingRight = "8px"
-                dc.appendChild(label);
+    function drawStats(type) {
+        var da = new Date()
+        var dor = 2017
+        var year = []
+        for (var j = dor - 2017; j <= da.getFullYear() - 2017; j++) {
+            if (cblist[j].checked) {
+                year.push(2017 + j)
             }
         }
 
-        createShortcut()
-        drawStats("Dénivelé")
+        var val = []
+        var dslist = []
+        if (year.length == 0) {
+            year.push(da.getFullYear())
+            cblist[cblist.length - 1].checked = true
+        }
+        for (j = 0; j < year.length; j++) {
+            var v = prepareYear(year[j], type)
+            val.push(v)
+            dslist.push({
+                data: v.cumdist,
+                label: year[j],
+                borderColor: color[year[j] - 2017],
+                pointRadius: 0,
+                fill: false
+            })
+
+        }
+
+        var ctx = document.getElementById("line-chart").getContext("2d")
+        if (lineChart != null) {
+            lineChart.destroy();
+        }
+        lineChart = new Chart(ctx, {
+            type: 'line',
+            plugins: [
+                // This chart will use the plugin
+                ChartRegressions
+            ],
+            data: {
+                labels: val[0].days,
+                datasets:   dslist,
+            },
+            options: {
+                title: {
+                    display: true,
+                    text: type
+                },
+                scales: {
+                    xAxes: [{
+                        ticks: {
+                            autoSkip: false
+                        },
+                        gridLines: {
+                            display:false
+                        }
+
+                    }]
+                }
+
+            }
+        });
+
+    }
+
+    function createShortcut() {
+        da = new Date()
+        dor = 2017
+        dc = document.getElementById('year_shortcut')
+        for (var i = dor; i <= da.getFullYear(); i++) {
+            var newCheckbox = document.createElement("input");
+            newCheckbox.type = "checkbox";
+            newCheckbox.myparam = i
+            newCheckbox.id = "year" + i
+            newCheckbox.addEventListener(
+                'change',
+                function (evt) {
+                    radio = document.myForm.stat_type
+                    console.log("Pat Add ", radio)
+                    drawStats(radio.value)
+                },
+            )
+
+            cblist.push(newCheckbox)
+
+            dc.appendChild(newCheckbox);
+            var label = document.createElement('label');
+            label.htmlFor = i;
+            label.appendChild(document.createTextNode(i));
+            label.style.paddingLeft = "4px"
+            label.style.paddingRight = "8px"
+            dc.appendChild(label);
+        }
+    }
+
+    createShortcut()
+    drawStats("Dénivelé")
 
 
 </script>

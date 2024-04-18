@@ -1,0 +1,23 @@
+strava/es3.py
+strava/apps/templates/home/dashboard.html.s
+strava/export.sh
+strava/db.sqlite3
+strava/ga copy.py
+strava/ga.pyc
+strava/get_all_activities2.py
+strava/get_athlete_activities.py
+strava/get_one_activity.py
+strava/get_one_activity_segment.py
+strava/get_user_info.py
+strava/history
+strava/nohup.out
+strava/refresh_token.py
+strava/strava_*.db
+strava/README.txt
+strava.db.save080224
+strava/apps/templates/home/try.html
+strava/apps/templates/home/pat.html
+strava/apps/templates/home/activities
+strava/apps/templates/home/activities copy.html
+strava/get_all_activities1.py
+strava/get_all_activities_segments.py

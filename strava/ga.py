@@ -1,10 +1,8 @@
 import requests
 import json
-import sys
-import  pandas
-import csv
 import sqlite3
-
+from datetime import datetime
+from datetime import timezone
 
 # true if activity has been treated 
 def isActivityPresent(a):
@@ -13,7 +11,7 @@ def isActivityPresent(a):
     cur = con.cursor()
 
     try:
-        st="SELECT * FROM segment_efforts WHERE activity_ID =  '"+str(a)+"' ;"
+        st="SELECT * FROM activities WHERE ID =  '"+str(a)+"' ;"
         cur.execute(st)
         rows = cur.fetchall()
         con.close()
@@ -25,92 +23,169 @@ def isActivityPresent(a):
     return False
 
 # get Last activity
-def readLastActivity():
+def readLastActivity(uid):
     #connection to sqlite db strava.db
     con = sqlite3.connect('strava.db')
     cur = con.cursor()
     la=0
 
     try:
-        st="SELECT value  FROM settings WHERE key =  'last_activity' ;"
+       # st="SELECT value  FROM settings WHERE key =  'last_activity' ;"
+        st="SELECT last_activity_segment FROM strava_users WHERE ID = '" + str(uid) + "' ;"
         cur.execute(st)
         rows = cur.fetchall()
-        la=rows[0][0]
+        con.close()
+        if len(rows) > 0 :
+            rv=rows[0][0]
+            la=datetime.fromisoformat(rv[:-1]).astimezone(timezone.utc).timestamp()
     except KeyError as e :
          print("key error encountered or e=",e)
-    con.close()
     return la
 
 # Update Last activity
-def updateLastActivity(val):
+def updateLastActivity(val,uid):
+    #connection to sqlite db strava.db
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor()
+    try:
+        st="UPDATE strava_users SET last_activity_segment = '" + str(val) + "' WHERE ID ='" +str(uid) + "';"
+        cur.execute(st)
+        con.commit()
+        con.close()
+        print("Update Last activity with" ,val)
+    except Exception as e :
+         print("Exception encountered or e=",e)
+
+# Update activity with summary
+def updateActivityPolyline(summary_polyline,aid):
+    #connection to sqlite db strava.db
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor()
+    try:
+        st="UPDATE activities SET summary_polyline = '" + str(summary_polyline) + "' WHERE ID ='" +str(aid) + "';"
+        cur.execute(st)
+        con.commit()
+        con.close()
+        print("Update Last activity ok")
+    except Exception as e :
+         print("Exception encountered or e=",e)
+
+def isSegmentPresent(s):
     #connection to sqlite db strava.db
     con = sqlite3.connect('strava.db')
     cur = con.cursor()
 
     try:
-        st="UPDATE settings SET value = " + str(val) + " WHERE key='last_activity';"
+        st="SELECT * FROM segments WHERE ID =  '"+str(s)+"' ;"
         cur.execute(st)
-        con.commit()
-        print("Update Last activity with" ,val)
+        rows = cur.fetchall()
+        con.close()
+        if len(rows) > 0:
+            return True
     except KeyError as e :
-         print("key error encountered or e=",e)
-    con.close()
-
-
+        print("key error encountered or e=",e)
+        con.close()
+    return False
 
 # Add segmment into segments table
-def addsegment(id, con):
-    with open('strava_tokens.json') as json_file:
-            strava_tokens = json.load(json_file)
+def addsegment(sid, con,access_token=''):
 
+    #first check thatt segment is not yet present 
+    if isSegmentPresent(sid):
+        return
+    if access_token == '' :
+        with open('strava_tokens.json') as json_file:
+            strava_tokens = json.load(json_file)
+        access_token = strava_tokens['access_token']
     #connection to sqlite db strava.db
     #con = sqlite3.connect('strava.db')
     cur = con.cursor()
 
-    url = "https://www.strava.com/api/v3/segments/"+id
-    access_token = strava_tokens['access_token']
+    url = "https://www.strava.com/api/v3/segments/"+sid
 
     r = requests.get(url + '?access_token=' + access_token)
     r = r.json()
 
+    print("Adding segment : ",sid)
+    st="""INSERT INTO segments (ID,name,activity_type,distance,average_grade,maximum_grade,elevation_high,elevation_low,total_elevation_gain,climb_category,city,state,country,private,starred) VALUES (? ,?, ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?, ?, ?)"""
     try:
-        
-        st="SELECT * from segments where ID = '"+id+"'"
-        cur.execute(st)
-        rows = cur.fetchall()
-        if len(rows) == 0:
-           print("Adding segment : ",id)
-           st="""INSERT INTO segments (ID,name,activity_type,distance,average_grade,maximum_grade,elevation_high,elevation_low,total_elevation_gain,climb_category,city,state,country,private,starred) VALUES (? ,?, ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?, ?, ?)"""
-           try:
-               cur.execute(st,(r['id'],r['name'],r['activity_type'],r['distance'],r['average_grade'],r['maximum_grade'],r['elevation_high'],r['elevation_low'],r['total_elevation_gain'],r['climb_category'],r['city'],r['state'],r['country'],r['private'],r['starred']))
-               con.commit()
-           except Exception as e :
-               print("Error encountered while adding segment e=",e)
-        
-    except KeyError as e :
-         print("key error encountered or e=",e)
+        city=r.get('city') 
+        if city == None:
+          city=""
+        state=r.get('state')
+        if state == None:
+          state=""
+        country=r.get('country')
+        if country == None:
+          country=""
 
+        cur.execute(st,(r['id'],r['name'],r['activity_type'],r['distance'],r['average_grade'],r['maximum_grade'],r['elevation_high'],r['elevation_low'],r['total_elevation_gain'],r['climb_category'],city,state,country,r['private'],r['starred']))
+        con.commit()
+    except Exception as e :
+               print("Error encountered while adding segment e=",e)
+
+# Add segmment into segments table
+def addsegmentFromEffort(sid,ses, con,access_token=''):
+
+    #first check thatt segment is not yet present 
+    if isSegmentPresent(sid):
+        return
+   
+    cur = con.cursor()
+
+    url = "https://www.strava.com/api/v3/segments/"+sid
+
+    print("Adding segment : ",sid)
+    st="""INSERT INTO segments (ID,name,activity_type,distance,average_grade,maximum_grade,elevation_high,elevation_low,total_elevation_gain,climb_category,city,state,country,private,starred) VALUES (? ,?, ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?, ?, ?)"""
+    try:
+        city=ses.get('city') 
+        if city == None:
+          city=""
+        state=ses.get('state')
+        if state == None:
+          state=""
+        country=ses.get('country')
+        if country == None:
+          country=""
+        cur.execute(st,(ses['id'],ses['name'],ses['activity_type'],ses['distance'],ses['average_grade'],ses['maximum_grade'],ses['elevation_high'],ses['elevation_low'],ses['elevation_high']-ses['elevation_low'],ses['climb_category'],city,state,country,ses['private'],ses['starred']))
+        con.commit()
+    except Exception as e :
+               print("Error encountered while adding segment e=",e)
 
 # add activity into activities table 
-def addActivity(id):
-
-    print("Pat Add  addactivity id=",id)
+def addActivity(id,access_token=''):
 
     #connection to sqlite db strava.db
     con = sqlite3.connect('strava.db')
     cur = con.cursor()
 
+    st="select * from activities where ID="+ str(id) + " AND athlete=1758959"
+
+    try:
+        cur.execute(st)
+    except sqlite3.IntegrityError as e:
+        raise Exception("error while adding activitiy err="+str(e))
+
+    rows = cur.fetchall()
+    if len(rows)>0 :
+        raise Exception(f"activity {id} already exist")
+
     # Get the tokens from file to connect to Strava
-    with open('strava_tokens.json') as json_file:
+    if access_token=='' :
+        with open('strava_tokens.json') as json_file:
             strava_tokens = json.load(json_file)
+        access_token = strava_tokens['access_token']
 
     url = "https://www.strava.com/api/v3/activities/"+id
 
-    access_token = strava_tokens['access_token']
+    
     r = requests.get(url + '?access_token=' + access_token)
     r = r.json()
 
-    aid=r['id']
+    try:
+        aid=r['id']
+    except Exception:
+        raise Exception("response rc is"+r)
     try: 
         name=r['name']
     except Exception:
@@ -136,9 +211,9 @@ def addActivity(id):
     except Exception:  
         athlete=""  
     try:
-        type=r['type']
+        _type=r['type']
     except Exception:
-        type=""
+        _type=""
     try:
         sport_type=r['sport_type']
     except Exception:
@@ -235,32 +310,44 @@ def addActivity(id):
         device=r['device_name']
     except Exception:
         device=""
-    print("Add activities", id)
-    st = """INSERT INTO activities (ID,name,distance,moving_time,elapsed_time,elevation,athlete,type,sport_type,workout_type,start_date_local,location_city,location_state,location_country,private,flagged,start_lat,start_lng,end_lat,end_lng,average_speed,max_speed,average_cadence,average_temp,average_watts,elevation_high,elevation_low,description,calories,gear_name,gear_distance,device) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
     try:
-        cur.execute(st, (aid,name,distance,moving_time,elapsed_time,elevation,athlete,type,sport_type,workout_type,start_date_local,location_city,location_state,location_country,private,flagged,start_lat,start_lng,end_lat,end_lng,average_speed,max_speed,average_cadence,average_temp,average_watts,elevation_high,elevation_low,description,calories,gear_name,gear_distance,device))
+        summary_polyline=r['map']['summary_polyline']
+    except Exception:
+        summary_polyline=""
+
+    print("Add activities", id)
+    st = """INSERT INTO activities (ID,name,distance,moving_time,elapsed_time,elevation,athlete,type,sport_type,workout_type,start_date_local,location_city,location_state,location_country,private,flagged,start_lat,start_lng,end_lat,end_lng,average_speed,max_speed,average_cadence,average_temp,average_watts,elevation_high,elevation_low,description,calories,gear_name,gear_distance,device,summary_polyline) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+    try:
+        cur.execute(st, (aid,name,distance,moving_time,elapsed_time,elevation,athlete,_type,sport_type,workout_type,start_date_local,location_city,location_state,location_country,private,flagged,start_lat,start_lng,end_lat,end_lng,average_speed,max_speed,average_cadence,average_temp,average_watts,elevation_high,elevation_low,description,calories,gear_name,gear_distance,device,summary_polyline))
     except sqlite3.IntegrityError as e:
             print("activitiy already exists", e, " ", st)
     
     con.commit()
     con.close()
+    return r
 
 
 # add segment_efforts from an activity into segment_efforts table 
-def gse(id):
+def gse(id,r=None,access_token='',):
     #connection to sqlite db strava.db
     con = sqlite3.connect('strava.db')
     cur = con.cursor()
 
-    # Get the tokens from file to connect to Strava
-    with open('strava_tokens.json') as json_file:
-            strava_tokens = json.load(json_file)
+    if r == None: 
+        if access_token=='':
+            # Get the tokens from file to connect to Strava
+            with open('strava_tokens.json') as json_file:
+                    strava_tokens = json.load(json_file)
+            access_token = strava_tokens['access_token']
 
-    url = "https://www.strava.com/api/v3/activities/"+id
+        url = "https://www.strava.com/api/v3/activities/"+id
 
-    access_token = strava_tokens['access_token']
-    r = requests.get(url + '?access_token=' + access_token)
-    r = r.json()
+        r = requests.get(url + '?access_token=' + access_token)
+        r = r.json() 
+
+        if  isinstance(r, dict)  :
+                if ('messsage' in r) and  (r['message'] == 'Rate Limit Exceeded' ) :
+                    return("quota exceeded")
 
     for s in r['segment_efforts']:
         seid = str(s['id'])
@@ -270,6 +357,8 @@ def gse(id):
         athlete_id = str(s['athlete']['id'])
         moving_time = str(s['moving_time'])
         elapsed_time = str(s['elapsed_time'])
+        starred = str(s['segment']['starred'])
+        private=str(s['segment']['private'])
         try:
             average_watts = str(s['average_watts'])
         except KeyError:
@@ -282,66 +371,276 @@ def gse(id):
         start_date_local = str(s['start_date_local'])
 
         if elevation != "":
-            print("Add effort for segment ", name, " ", seid)
-            addsegment(sid, con)
+            addsegmentFromEffort(sid, s['segment'], con, access_token)
                 #st="INSERT INTO segment_efforts (ID,segment_ID,activity_ID,segment_name,segment_distance,athlete_ID,moving_time,elapsed_time,average_watts,average_rate,elevation,start_date_local) VALUES (" + seid + "," + sid + "," + id + ", + \"%s\" + ," + distance + "," + athlete_id + "," + moving_time + "," + elapsed_time + "," + average_watts + "," + average_grade + "," + elevation + "," + start_date_local+")"
             st = """INSERT INTO segment_efforts (ID,segment_ID,activity_ID,segment_name,segment_distance,athlete_ID,moving_time,elapsed_time,average_watts,average_rate,elevation,start_date_local) VALUES (?,?,?,?, ?, ?, ?, ?, ?, ?, ?, ?)"""
             try:
                 cur.execute(st, (seid, sid, id, name, distance, athlete_id, moving_time, elapsed_time, average_watts,average_grade,elevation,start_date_local))
             except sqlite3.IntegrityError as e:
-                print("segment effort already added or ee=", e, " ", st)
-    
+                print("segment effort already added or ee=", e)
+            try:
+                st1 = """INSERT INTO segment_athlete (segment_ID,athlete_ID,private,starred) VALUES (?,?,?,?)"""
+                cur.execute(st1, (sid, athlete_id, private, starred))
+            except sqlite3.IntegrityError as e:
+                print("segment effort already added in segment_athlete or ee=", e)
     con.commit()
     con.close()
+    
 
-# get all segments effort for a segment
-def retrieve_segment_efforts(sid):
+# get all segments effort for a segment for user uid 
+def retrieve_segment_efforts(sid,uid):
     con = sqlite3.connect('strava.db')
     cur = con.cursor() 
-    st="SELECT elapsed_time,start_date_local,elevation,segment_distance,average_rate FROM segment_efforts WHERE segment_ID =  '" + sid + "' ORDER by start_date_local ;"
+    st="SELECT elapsed_time,start_date_local,elevation,segment_distance,average_rate FROM segment_efforts WHERE segment_ID =  '" + str(sid) + "' AND athlete_ID='"+str(uid)+"' ORDER by start_date_local ;"
     cur.execute(st)
     rows = cur.fetchall()
     con.close()
-    #print(rows)
     return(rows)
 
+#get the most executed segment effort 
+def retrieve_higher_segment_effort(uid):
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor() 
+    st="select  segment_ID,segment_name,count(*) from segment_efforts where athlete_ID="+ str(uid) + " AND average_rate > 5 group by segment_id ORDER  by count(*) DESC limit 1"
+    cur.execute(st)
+    rows = cur.fetchall()
+    con.close()
+    if len(rows) > 0:
+        return (rows[0][0],rows[0][1])
+    else: 
+        return (0,0)
+
+# Update segment starred for a segment 
+def updateSegmentStarred(val,sid,aid):
+    #connection to sqlite db strava.db
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor()
+
+    try:
+        st="UPDATE segment_athlete SET starred = '" + str(val) + "' WHERE segment_ID ='" +str(sid) + "' AND athlete_ID = '"+str(aid) + "';"
+        cur.execute(st)
+        con.commit()
+        con.close()
+        print("Update segment starred with" ,val)
+    except KeyError as e :
+         print("key error encountered or e=",e)
+
 # get all segments 
-def retrieve_segments(pattern, like,starred):
+def retrieve_segments(pattern, like,starred,uid):
     con = sqlite3.connect('strava.db')
     cur = con.cursor() 
     
     if pattern != "" : 
         if like == "like":
             pattern="%"+pattern+"%"  
-        st="SELECT name,id FROM segments where name " + like + " '" + pattern + "' "
+        #select segments.ID,segment_athlete.athlete_ID from segments INNER JOIN segment_athlete on segments.ID=segment_athlete.segment_ID WHERE segment_athlete.athlete_ID=1758959'    
+        st="SELECT segments.name,segments.id,segment_athlete.starred FROM segments INNER JOIN segment_athlete on segments.ID=segment_athlete.segment_ID  where segments.name " + like + " '" + pattern + "' AND segment_athlete.athlete_ID='"+str(uid)+"'"
         if starred == "true":
-            st += " AND starred = 1"
+            st += " AND segment_athlete.starred = 1"
     else :
-        st="SELECT name,id FROM segments"
+        st="SELECT segments.name,segments.id,segment_athlete.starred FROM segments INNER JOIN segment_athlete on segments.ID=segment_athlete.segment_ID WHERE segment_athlete.athlete_ID='"+str(uid)+"'"
         if starred == "true":
-            st += " WHERE starred = 1"
+            st += " AND segment_athlete.starred = 1"
     st +=  ";" 
     cur.execute(st)
     rows = cur.fetchall()
     con.close()
     return(rows)
 
-# get all ascensions >= pct pourcentage 
-def retrieve_ascensions(pct):
+# get all ascensions >= pct pourcentage  for user uid
+def get_ascensions(pct,uid,starred=False):
     con = sqlite3.connect('strava.db')
     cur = con.cursor() 
-    st="SELECT segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID where average_rate >= "+str(pct)+" AND type='Ride' AND starred=1;"     
+    if starred :
+        starstring = " AND segment_athlete.starred='True'" 
+    else :
+        starstring = " "
+    #st="SELECT segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID where average_rate >= "+str(pct)+" AND type='Ride' AND starred=1 AND athlete_ID='"+str(uid)+"';"     
+    st="SELECT segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID INNER JOIN segment_athlete ON segment_efforts.segment_ID=segment_athlete.segment_ID AND segment_efforts.athlete_ID=segment_athlete.athlete_ID  where average_rate >= "+str(pct)+ starstring+ " AND type='Ride' AND segment_efforts.athlete_ID='"+str(uid)+"';"     
+    cur.execute(st)
+    rows = cur.fetchall()
+    if len(rows) == 0:
+      starstring = " "
+      st="SELECT segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID INNER JOIN segment_athlete ON segment_efforts.segment_ID=segment_athlete.segment_ID AND segment_efforts.athlete_ID=segment_athlete.athlete_ID  where average_rate >= "+str(pct)+ starstring+ " AND type='Ride' AND segment_efforts.athlete_ID='"+str(uid)+"';"     
+      cur.execute(st)
+      rows = cur.fetchall()
+      
+    con.close()
+    return(rows)
+
+# get last 3 ascensions with lenght > length (m) and % > pct.
+# return starred ascensions except if there is no starred ascensions matching
+def get_last_3_ascensions(length,pct,uid,starred=True):
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor() 
+    if starred :
+        starstring = " AND segment_athlete.starred='True' " 
+    else :
+        starstring = " "
+    #st="SELECT segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID where average_rate >= "+str(pct)+" AND type='Ride' AND starred=1 AND athlete_ID='"+str(uid)+"';"     
+    st="SELECT segment_efforts.segment_name,segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID INNER JOIN segment_athlete ON segment_efforts.segment_ID=segment_athlete.segment_ID AND segment_efforts.athlete_ID=segment_athlete.athlete_ID  where segment_distance>" +str(length)+" and average_rate >= "+str(pct)+ starstring+ " AND type='Ride' AND segment_efforts.athlete_ID='"+str(uid)+"' ORDER by segment_efforts.start_date_local DESC LIMIT 3;"     
+    cur.execute(st)
+    rows = cur.fetchall()
+    if len(rows) == 0:
+       starstring = " "
+       st="SELECT segment_efforts.segment_name,segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID INNER JOIN segment_athlete ON segment_efforts.segment_ID=segment_athlete.segment_ID AND segment_efforts.athlete_ID=segment_athlete.athlete_ID  where segment_distance>"+str(length)+ " and average_rate >= "+str(pct)+ " AND type='Ride' AND segment_efforts.athlete_ID='"+str(uid)+"' ORDER by segment_efforts.start_date_local DESC LIMIT 3;"     
+       cur.execute(st)
+       rows = cur.fetchall() 
+    con.close()
+    return(rows)
+
+def get_longest_activity_ascension(cur,aid, length,pct,uid,starred=False,nbraw=1):
+    if starred :
+        starstring = " AND segment_athlete.starred='True'" 
+    else :
+        starstring = " "
+    st="SELECT segment_efforts.segment_name,segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID INNER JOIN segment_athlete ON segment_efforts.segment_ID=segment_athlete.segment_ID AND segment_efforts.athlete_ID=segment_athlete.athlete_ID  where segment_distance>"+str(length)+ " AND average_rate >= "+str(pct)+starstring+ "AND segment_efforts.activity_ID = '"+ str(aid)+"' ORDER by segment_distance DESC LIMIT "+str(nbraw)+";"     
+    cur.execute(st)
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        st="SELECT segment_efforts.segment_name,segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID INNER JOIN segment_athlete ON segment_efforts.segment_ID=segment_athlete.segment_ID AND segment_efforts.athlete_ID=segment_athlete.athlete_ID where segment_distance>"+str(length)+" AND average_rate >= "+str(pct) + " AND segment_efforts.activity_ID = '"+ str(aid)+"' ORDER by segment_distance DESC LIMIT "+str(nbraw)+";"     
+        cur.execute(st)
+        rows = cur.fetchall()
+        if len(rows) == 0:
+            st="SELECT segment_efforts.segment_name,segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID INNER JOIN segment_athlete ON segment_efforts.segment_ID=segment_athlete.segment_ID AND segment_efforts.athlete_ID=segment_athlete.athlete_ID  where average_rate >= "+str(pct) + "AND segment_efforts.activity_ID = '"+ str(aid)+"' ORDER by segment_distance DESC LIMIT "+str(nbraw)+";"     
+            cur.execute(st)
+            rows = cur.fetchall()
+    if len(rows) != 0 :
+        return rows[0]
+    else : 
+        return None
+
+def get_last_3_ascensions_2(length,pct,uid,starred=False):
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor() 
+    
+    #get last 3 acttivities 
+    rows=get_last_3_activities(uid)
+    if len(rows) > 0 :
+        row1=str(rows[0][9])
+        if len(rows) == 1:
+            row2=str(rows[0][9])
+            row3=str(rows[0][9])
+        if  len(rows) == 2:
+            row2=str(rows[1][9])
+            row3=str(rows[0][9])
+        if  len(rows) >= 3:
+            row2=str(rows[1][9])
+            row3=str(rows[2][9])
+    else : 
+        return []
+    
+    return_rows=[]
+    nbrow=1
+    newraw=get_longest_activity_ascension(cur,str(rows[0][9]), length,pct,uid,starred,nbrow)
+    if newraw != None:
+        return_rows.append(newraw)
+    else :
+        nbrow=nbrow+1
+    
+    newraw=get_longest_activity_ascension(cur,str(rows[1][9]), length,pct,uid,starred,nbrow)
+    if newraw != None:
+        return_rows.append(newraw)
+        nbrow=1
+    else :
+        nbrow=nbrow+1    
+    
+    newraw=get_longest_activity_ascension(cur,str(rows[2][9]), length,pct,uid,starred,nbrow)
+    if newraw != None:
+        return_rows.append(newraw)
+    con.close()
+    print(return_rows)
+    return(return_rows)
+
+# get all activities for user uid
+def get_activities(uid,limit=None,offset=None):
+    
+    limitstring=""
+    if limit != None :
+        if offset==None: 
+            offset=0
+        limitstring=" Limit " + str(limit) +  " offset " + str(offset) + " "           
+
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor() 
+    st="SELECT name,ID,distance,moving_time,elevation,average_speed,max_speed,average_cadence,average_temp,gear_name,gear_distance,start_date_local,summary_polyline from  activities where type = 'Ride' and sport_type='Ride'and distance>5000 and elevation > 10 and average_speed>1.66 and athlete ='"+str(uid)+"' ORDER by start_date_local DESC "+limitstring+";"    
     cur.execute(st)
     rows = cur.fetchall()
     con.close()
     return(rows)
 
-# get all activities 
-def retrieve_activities():
+# get all activities for user uid and strava type. 
+# type syntax is 'Type in ("Walk","Run")
+def get_activities_by_type(uid,type):
     con = sqlite3.connect('strava.db')
     cur = con.cursor() 
-    st="SELECT name,ID,distance,moving_time,elevation,average_speed,max_speed,average_cadence,average_temp,gear_name,gear_distance,start_date_local from  activities where type = 'Ride' and sport_type='Ride'and distance>5000 and elevation > 10 and average_speed>1.66  ORDER by start_date_local ASC;"    
+    st="SELECT name,ID,distance,moving_time,elevation,average_speed,max_speed,average_cadence,average_temp,gear_name,gear_distance,start_date_local,summary_polyline from  activities where "+type+" and athlete ='"+str(uid)+"' ORDER by start_date_local ASC;"    
     cur.execute(st)
     rows = cur.fetchall()
     con.close()
     return(rows)
+
+# get all activities for user uid
+def get_last_3_activities(uid):
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor() 
+    st="SELECT name,distance,moving_time,elevation,average_speed,start_date_local,average_cadence,average_temp,summary_polyline,ID from  activities where type = 'Ride' and sport_type='Ride'and distance>5000 and elevation > 10 and average_speed>1.66 and athlete ='"+str(uid)+"' ORDER by start_date_local DESC limit 3;"    
+    cur.execute(st)
+    rows = cur.fetchall()
+    con.close()
+    return(rows)
+
+# get all activities for user uid
+def get_activities_in_interval(uid,begin_date,end_date):
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor() 
+    st="SELECT name,distance,moving_time,elevation,average_speed,start_date_local,average_cadence,average_temp from  activities where type = 'Ride' and sport_type='Ride'and distance>5000 and elevation > 10 and average_speed>1.66 and athlete ='"+str(uid)+"' AND start_date_local>date('"+str(begin_date)+"') and start_date_local<date('"+str(end_date)+"');"    
+    cur.execute(st)
+    rows = cur.fetchall()
+    con.close()
+    return(rows)
+# Users
+def get_user(user_json):
+    #connection to sqlite db strava.db
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor()
+    uid=''
+    if type(user_json) is dict :
+        uid=user_json.get('id')
+    else :
+        uid=str(user_json)
+    try:
+        st="SELECT id,email,user_name,refresh_token FROM strava_users WHERE id =  " + str(uid) + " ;"
+        cur.execute(st)
+        rows = cur.fetchall()      
+    except KeyError as e :
+         print("key error encountered or e=",e) 
+         return None     
+    if len(rows) == 0 :   
+        st="""INSERT INTO strava_users (ID, user_name, first_name, last_name, created_at, last_activity_segment) VALUES (? ,?, ?, ?, ?,?)"""
+        try:
+            cur.execute(st,(user_json['id'],user_json['username'],user_json['firstname'],user_json['lastname'],user_json['created_at'],'0'))
+            con.commit()
+            st="SELECT id,email,user_name,refresh_token FROM strava_users WHERE id =  "+str(uid)+" ;"
+            cur.execute(st)
+            rows = cur.fetchall()    
+            if len(rows) == 0 :
+                print("Error encountered while adding user e=",e)
+                return None
+        except Exception as e :
+            print("Error encountered while adding user e=",e)
+            return None
+
+    con.close()
+    return rows[0]
+
+def update_refresh_token(uid,refresh_token): 
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor()
+    st="""UPDATE strava_users SET refresh_token = ? WHERE ID = ? """
+    try:   
+        cur.execute(st,(str(refresh_token),str(uid)))
+        con.commit()
+    except KeyError as e :
+            print("Error encountered while updating user refresh_token, e=",e)
+    con.close()       

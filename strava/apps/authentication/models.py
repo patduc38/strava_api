@@ -34,7 +34,9 @@ class Users(db.Model, UserMixin):
 
     def __repr__(self):
         return str(self.username)
-
+    
+    def remove(self):
+        db.session.delete(self)
 
 @login_manager.user_loader
 def user_loader(id):

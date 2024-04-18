@@ -1,0 +1,66 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} work in progress {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"-->
+    <link href="https://getbootstrap.com/docs/5.2/assets/css/docs.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="/static/assets//Leaflet.encoded/Polyline.encoded.js"></script>
+  </head>
+  <body class="p-3 m-0 border-0 bd-example">
+ 
+    <div id="map-div" style="width: 100%; height: 700px"></div>
+  
+    <script>
+
+activities = {{ activities | safe }}
+activities_walk = {{ activities_walk | safe }}
+        mapDiv = document.getElementById("map-div");
+
+        var map = new L.Map(mapDiv);
+        L.tileLayer(
+            'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            {
+                attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+                maxZoom: 18
+            }
+        ).addTo(map);
+        var encoded = activities[0];
+        var polyline = L.Polyline.fromEncoded(encoded);
+        latlong=[]
+        latlong.push(polyline.getLatLngs())
+        segment=[]
+        for (i=1; i<activities.length; i++) {
+          encoded = activities[i];
+          polylinetemp=L.Polyline.fromEncoded(encoded);
+          segment.push(polylinetemp)
+          latlong.push(polylinetemp.getLatLngs())
+        }
+        
+        for (i=0; i<activities_walk.length; i++) {
+          encoded = activities_walk[i];
+          polylinetemp=L.Polyline.fromEncoded(encoded,{color: 'red'});
+          segment.push(polylinetemp)
+          latlong.push(polylinetemp.getLatLngs())
+        }
+        polyline.setLatLngs(latlong)
+        map.fitBounds(polyline.getBounds());
+        L.featureGroup(segment).addTo(map);
+    </script>
+    
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}

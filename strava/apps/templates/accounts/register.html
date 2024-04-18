@@ -51,7 +51,11 @@
                                             <span class="input-group-text" id="basic-addon1">
                                                 <span class="fas fa-user-circle"></span>
                                             </span>
-                                            {{ form.username(placeholder="Username", class="form-control") }}
+                                            {% if username %}
+                                                {{ form.username(value=username| safe, class="form-control") }}
+                                            {% else %}
+                                                {{ form.username(placeholder="Username", class="form-control") }}
+                                            {% endif %}
                                         </div>  
                                     </div>
 
@@ -62,9 +66,16 @@
                                             <span class="input-group-text" id="basic-addon1">
                                                 <span class="fas fa-envelope"></span>
                                             </span>
-                                            {{ form.email(placeholder="Email", class="input form-control", type="email") }}
+                                            {% if email %}
+                                                {{ form.email(placeholder=email | safe, class="input form-control", type="email") }}
+                                            {% else %}
+                                                {{ form.email(placeholder="Email", class="input form-control", type="email") }}
+                                            {% endif %}
+
                                         </div>  
                                     </div>
+
+
                                     <!-- End of Form -->
                                     <div class="form-group">
                                         <!-- Form -->
@@ -90,6 +101,11 @@
                                     <div class="d-grid">
                                         <button type="submit" name="register" class="btn btn-gray-800">Sign UP</button>
                                     </div>
+                                    {% if id %}
+                                        {{ form.id(value=id| safe, class="input form-control", type="hidden") }}
+                                    {% else %}
+                                        {{ form.id(value="1234", class="input form-control", type="hidden") }}
+                                    {% endif %}
                                 </form>
                                 <br /> 
                                 <div class="d-flex justify-content-center align-items-center mt-4">

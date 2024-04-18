@@ -1,21 +1,66 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Dashboard {% endblock %} 
+{% block title %} Dashboard {% endblock %}
 
 <!-- Specific Page CSS goes HERE  -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.m.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
+<style>
+    .accordion-button:not(.collapsed) {
+        color: white;
+        background-color: DeepSkyBlue;
+    }
+
+    .h6 {
+        color: deepskyblue;
+    }
+
+    .btn+.btn-outline-primary {
+        color: black;
+        background-color: white;
+        border-color: #1F2937;
+    }
+
+    .btn-check:checked+.btn-outline-primary,
+    .btn-check:active+.btn-outline-primary,
+    .btn-outline-primary:active,
+    .btn-outline-primary.active,
+    .btn-outline-primary.dropdown-toggle.show {
+        color: #ffffff;
+        background-color: deepskyblue;
+        border-color: #1F2937;
+    }
+
+</style>
+{% endblock stylesheets %}
 
 
 {% block content %}
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="/static/assets//Leaflet.encoded/Polyline.encoded.js"></script>
+
 <script>
+    window.onload = function () {
+        var url = new URL(window.location.href);
+        console.log("pat new url is  ", url.toString())
+        //if (url.searchParams.has('starred')) {
+        if (url.searchParams.get("starred") == "true") {
+            document.getElementById("starred").checked = true; // Check the checkbox
+        }
+    };
+
     function updateShortcut() {
-        da=new Date()
-        dor=2017
-        var cblist=[]
-        for (var i=dor; i<=da.getFullYear();i++ ){
-            cb=document.getElementById("year"+i)
-            cb.checked=false            
+        da = new Date()
+        dor = 2017
+        var cblist = []
+        for (var i = dor; i <= da.getFullYear(); i++) {
+            cb = document.getElementById("year" + i)
+            cb.checked = false
         }
     }
 
@@ -23,429 +68,923 @@
         updateShortcut()
         console.debug("Pat add patochon")
 
-        var debd=document.getElementById('start')
+        var debd = document.getElementById('start')
         if (debd.value == '') {
-            debd.value =''
+            debd.value = ''
             return
         }
-        var d=new Date(debd.value)
-        var min=new Date(debd.min)
-        var max=new Date(debd.max)
+        var d = new Date(debd.value)
+        var min = new Date(debd.min)
+        var max = new Date(debd.max)
         if (d < min) {
-            alert("Specified that is lower than minimum allowed date: "+min)
-            debd.value=''
+            alert("Specified that is lower than minimum allowed date: " + min)
+            debd.value = ''
             return
-        } 
+        }
         if (d > max) {
-            alert("Specified that is lower than maximum allowed date: "+max)
-            debd.value=''
+            alert("Specified that is lower than maximum allowed date: " + max)
+            debd.value = ''
             return
-        } 
-        
-        document.getElementById('end').min=debd
-        
+        }
+
+        document.getElementById('end').min = debd
+
     }
 
     function updateStartMax() {
         console.debug("Pat add patochon2")
 
         updateShortcut()
-        var endd=document.getElementById('end') 
+        var endd = document.getElementById('end')
         if (endd.value == '') {
-            endd.value =''
+            endd.value = ''
             return
         }
-        var d=new Date(endd.value)
-        var min=new Date(endd.min)
-        var max=new Date(endd.max)
+        var d = new Date(endd.value)
+        var min = new Date(endd.min)
+        var max = new Date(endd.max)
         if (d < min) {
-            alert("Specified that is lower than minimum allowed date: "+min)
-            endd.value=''
+            alert("Specified that is lower than minimum allowed date: " + min)
+            endd.value = ''
             return
-        } 
+        }
         if (d > max) {
-            alert("Specified that is lower than maximum allowed date: "+max)
-            endd.value=''
+            alert("Specified that is lower than maximum allowed date: " + max)
+            endd.value = ''
             return
-        } 
-        
-        document.getElementById('start').max=endd
+        }
+
+        document.getElementById('start').max = endd
     }
+
+    last3activities = {{ last3activities | safe }}
+    last3ascensions = {{ last3ascensions | safe }}
+    weekactivities = {{ weekactivities | safe }}
+    weekbeforeactivities = {{ weekbeforeactivities | safe }}
+    monthactivities = {{ monthactivities | safe }}
+    monthbeforeactivities = {{ monthbeforeactivities | safe }}
+    yearactivities = {{ yearactivities | safe }}
+    yearbeforeactivities = {{ yearbeforeactivities | safe }}
+
+    function updateTrend(type) {
+        if (type == "week") {
+            activities = weekactivities
+            activitiesbefore = weekbeforeactivities
+        } else if (type == "month") {
+            activities = monthactivities
+            activitiesbefore = monthbeforeactivities
+        } else if (type == "year") {
+            activities = yearactivities
+            activitiesbefore = yearbeforeactivities
+        } else {
+            activities = weekactivities
+            activitiesbefore = weekbeforeactivities
+        }
+
+        // Distance
+        distance = activities.reduce(function (a, b) { return a + b[1]; }, 0);
+        distancebefore = activitiesbefore.reduce(function (a, b) { return a + b[1]; }, 0);
+        dist = (distance / 1000).toFixed(2) + " km"
+        sign = "+"
+        if (distance - distancebefore > 0) {
+            content = "&#x25B2;"
+            color = "greenyellow"
+        } else {
+            content = "&#x25BC;"
+            color = "red"
+            sign = ""
+        }
+        document.getElementById("periode_d").innerHTML ="<span style='font-size: small;'>"+ dist + "</span><br><span style='font-size: x-small;'>(&Delta;=" + sign + ((distance - distancebefore) / 1000).toFixed(0) + " km)</span>"
+        chevron = document.getElementById("periode_d_e")
+        chevron.innerHTML = content
+        chevron.style.color = color
+
+        //time
+        time = activities.reduce(function (a, b) { return a + b[2]; }, 0);
+        timebefore = activitiesbefore.reduce(function (a, b) { return a + b[2]; }, 0);
+        t = time
+        h = Math.floor(t / 3600)
+        t = t % 3600
+        m = Math.floor(t / 60)
+        distime = h + "h" + m + "'"
+        dt = time - timebefore
+        dh = Math.floor(dt / 3600)
+        dt = dt % 3600
+        dm = Math.abs(Math.floor(dt / 60))
+        diff = dh + "h" + dm + "'"
+
+        sign = "+"
+        if (time - timebefore >= 0) {
+            content = "&#x25B2;"
+            color = "greenyellow"
+        } else {
+            content = "&#x25BC;"
+            color = "red"
+            sign = ""
+        }
+        document.getElementById("periode_t").innerHTML = "<span style='font-size: small;'>"+distime + "</span><br><span style='font-size: x-small;'>(&Delta;=" + sign + diff + ")</span>"
+        chevron = document.getElementById("periode_t_e")
+        chevron.innerHTML = content
+        chevron.style.color = color
+
+        //Denivele 
+        denivweek = activities.reduce(function (a, b) { return a + b[3]; }, 0);
+        denivweekbefore = activitiesbefore.reduce(function (a, b) { return a + b[3]; }, 0);
+        sign = "+"
+        if (denivweek - denivweekbefore >= 0) {
+            content = "&#x25B2;"
+            color = "greenyellow"
+        } else {
+            content = "&#x25BC;"
+            color = "red"
+            sign = ""
+        }
+        document.getElementById("periode_dn").innerHTML ="<span style='font-size: small;'>"+ denivweek.toFixed(0) + " m" + "</span><br><span style='font-size: x-small;'>(&Delta;=" + sign + (denivweek - denivweekbefore).toFixed(0) + " m)</span>"
+
+        chevron = document.getElementById("periode_dn_e")
+        chevron.innerHTML = content
+        chevron.style.color = color
+
+        //sorties
+        sign = "+"
+        if (activities.length - activitiesbefore.length >= 0) {
+            content = "&#x25B2;"
+            color = "greenyellow"
+        } else {
+            content = "&#x25BC;"
+            color = "red"
+            sign = ""
+        }
+        document.getElementById("periode_s").innerHTML = "<span style='font-size: small;'>"+activities.length + "</span><br><span style='font-size: x-small;'>(&Delta;=" + sign + (activities.length - activitiesbefore.length) + ")</span>"
+        chevron = document.getElementById("periode_s_e")
+        chevron.innerHTML = content
+        chevron.style.color = color
+    }
+
 </script>
 
+<div class="col-12 col-xl-12">
+    <div class="d-block ms-auto">
+        <label for="start">Start date:</label>
+        <input type="date" id="start" name="start" value="" min="2017-01-01" max=""
+            onBlur="updateEndMin();        updateShortcut()">
+        <label for="end" style="margin: 0px 0px 0px 20px;">End date: </label>
+        <input type="date" id="end" name="end" value="" min="2017-01-01" onblur="updateStartMax();  updateShortcut()">
+        <button type="submit" id="button" onclick="updateDashboardInfo()">filter</button>
+        <div class="small mt-2" id="year_shortcut"></div>
 
-        <div class="col-12 col-xl-12">
-            <div class="d-block ms-auto">
-                <label for="start">Start date:</label>
-                <input type="date" id="start" name="start"
-                    value=""
-                    min="2017-01-01" max=""
-                    onBlur="updateEndMin();        updateShortcut()">
+    </div>
 
-                <label for="end" style="margin: 0px 0px 0px 20px;">End date: </label>
-                <input type="date" id="end" name="end"
-                        value=""
-                        min="2017-01-01"
-                        onblur="updateStartMax();  updateShortcut()">
-                <button type="submit"  id="button" onclick="updateDashboardInfo()">filter</button>
-                <div class="small mt-2" id="year_shortcut"></div>
+    <div class="row" style="--bs-gutter-x: 0.6rem;">
+        <div class="col-12 col-xl-4">
 
+            <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
+                <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                    <div class="d-block">
+                        <div>
+                            <span class="h6 text-black-400 mb-0" id="nom-segment">Stat. générales</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-2" style="font-size: 14px;">
+                    <div>
+                        <span class="text-black-400 fw-bolder  mb-0">Distance cumulée:</span>
+                        <span class="text-gray-400 fw-bolder" id="distance-totale"></span>
+                    </div>
+                    <div>
+                        <span class="text-black-400 fw-bolder  mb-0">Dénivelé cumulé:</span>
+                        <span class="text-gray-400 fw-bolder" id="elevation-total"></span>
+                    </div>
+                    <div>
+                        <span class="text-black-400 fw-bolder  mb-0">Nb de sorties:</span>
+                        <span class="text-gray-400 fw-bolder" id="activities-total"></span>
+                    </div>
+                    <div>
+                        <span class="text-black-400 fw-bolder  mb-0">Temps cumulé:</span>
+                        <span class="text-gray-400 fw-bolder" id="tps-total"></span>
+                    </div>
+                    <div style="margin: 0px,1px"> </div>
+                    <div class="d-flex align-items-left justify-content-between" style="margin-top: 9px;">
+                        <div>
+                            <span class="text-black-400 fw-bolder  mb-0">Nb d'ascensions:</span>
+                            <span class="text-gray-400 fw-bolder" id="nb-ascensions"></span>
+                            <br>
+                            <span class="text-black-400 fw-bolder  mb-0">denivelé cumulé:</span>
+                            <span class="text-gray-400 fw-bolder" id="deniv-ascensions"></span>
+                            <br>
+                            <span class="text-black-400 fw-bolder  mb-0">Temps cumulé:</span>
+                            <span class="text-gray-400 fw-bolder" id="tps-ascensions"></span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="col-12 px-0 mb-4">
-                        <div class="card border-0 shadow">
-                            <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
-                                <div class="d-block">
-                                    <div>
-                                        <span class="h6 text-black-400 mb-0" id="nom-segment">Statistiques relatives aux sorties</span> 
-                                    </div>                        
-                                </div>                       
-                            </div>
-                            <div class="card-body p-2">
-                                <div>
-                                    <span class="h6 text-gray-400 mb-0">Distance cumulée:</span> 
-                                    <span class="text-gray-400 fw-bolder" id="distance-totale"></span>
+            <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
+                <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                    <div class="d-block">
+                        <div>
+                            <span class="h6 text-black-400 mb-0" id="nom-segment" data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="ascensions d'au moins 1km et supérieures à 3%"><span
+                                    style="font-size: large;font-weight: light;color:darkcyan ">&#128712;</span> 3
+                                dernières ascensions</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-2" style='font-size: 14px'>
+                    <div class="accordion" id="accordionAscension">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOneAsc">
+                                <button class="accordion-button collapsed" id="asc_button_1" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseOneAsc" aria-expanded="false"
+                                    aria-controls="collapseOneAsc" style="font-size: 14px;">
+                                    <script>
+                                        document.getElementById("asc_button_1").innerHTML = last3ascensions[0][0]                                    
+                                    </script>
+                                </button>
+                            </h2>
+                            <div id="collapseOneAsc" class="accordion-collapse collapse" aria-labelledby="headingOneAsc"
+                                data-bs-parent="#accordionAscension">
+                                <div class="accordion-body" id="asc_content_1">
+                                    <script>
+                                        date = new Date(last3ascensions[0][4])
+                                        date = date.toLocaleString('fr-FR', {
+                                            weekday: 'long',
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric'
+                                        });
+
+                                        content = "<span class='text-black-600 fw-bolder'>" + date + '</span><br>'
+                                        content = content + "distance: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[0][1] / 1000).toFixed(2) + "km </span><br>"
+                                        content = content + "denivelé: <span class='text-gray-400 fw-bolder'>" + last3ascensions[0][3] + "m  (% " + (last3ascensions[0][3] / last3ascensions[0][1] * 100).toFixed(2) + ") </span><br>"
+                                        t = last3ascensions[0][2]
+                                        h = Math.floor(t / 3600)
+                                        t = t % 3600
+                                        m = Math.floor(t / 60)
+                                        t = t % 60
+                                        content = content + "temps: <span class='text-gray-400 fw-bolder'>" + h + "h" + m + "'" + t + "''  (vit. asc.: " + (last3ascensions[0][3] / last3ascensions[0][2] * 3600).toFixed(0) + "m/h)</span><br>"
+                                        content = content + "vit. moy.: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[0][1] / last3ascensions[0][2] * 3.6).toFixed(2) + "km/h </span><br>"
+                                        divelement = document.getElementById("asc_content_1")
+                                        divelement.innerHTML = content
+                                        //divelement.style.color="#ced4da"                          
+                                    </script>
                                 </div>
-                                <div>
-                                    <span class="h6 text-gray-400 mb-0">Dénivelé cumulé:</span> 
-                                    <span class="text-gray-400 fw-bolder" id="elevation-total"></span>
-                                </div> 
-                                <div>
-                                    <span class="h6 text-gray-400 mb-0">Nb de sorties:</span> 
-                                    <span class="text-gray-400 fw-bolder" id="activities-total"></span>
-                                </div> 
-                                <div>
-                                    <span class="h6 text-gray-400 mb-0">Temps cumulé:</span> 
-                                    <span class="text-gray-400 fw-bolder" id="tps-total"></span>
-                                </div>                                
-                                <div> <span class="h6 text-gray-400 mb-0">&nbsp;</span> </div>     
-                                <div class="d-flex align-items-center justify-content-between  pb-3">
-                                    <div>
-                                        <span class="h6 text-gray-400 mb-0">Distance</span> 
-                                        <ul>
-                                            <li>
-                                                <span class="h8 text-gray-400 mb-0">min:</span>
-                                                <span class="text-danger fw-bolder" id="distance-min"></span>
-                                            </li>
-                                            <li>
-                                                <span class="h8 text-gray-400 mb-0">max:</span>
-                                                <span class="text-success fw-bolder" id="distance-max"></span>
-                                            </li>
-                                            <li>
-                                                <span class="h8 text-gray-400 mb-0">moyenne:</span>
-                                                <span class="text-gray-400 fw-bolder" id="distance-moyenne"></span>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <div>
-                                        <span class="h6 text-gray-400 mb-0">Vitesse</span> 
-                                        <ul>                                      
-                                            <li>
-                                                <span class="h8 text-gray-400 mb-0">min:</span>
-                                                <span class="text-danger fw-bolder" id="vitesse-min"></span>
-                                            </li>
-                                            <li>
-                                                <span class="h8 text-gray-400 mb-0">max:</span>
-                                                <span class="text-success fw-bolder" id="vitesse-max"></span>
-                                            </li>
-                                            <li>
-                                                <span class="h8 text-gray-400 mb-0">moyenne:</span>
-                                                <span class="text-gray-400 fw-bolder" id="vitesse-moyenne"></span>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <div>
-                                        <span class="h6 text-gray-400 mb-0">Denivelé</span> 
-                                        <ul>
-                                            <li>
-                                                <span class="h8 text-gray-400 mb-0">min:</span>
-                                                <span class="text-danger fw-bolder" id="denivele-min"></span>
-                                            </li>
-                                            <li>
-                                                <span class="h8 text-gray-400 mb-0">max:</span>
-                                                <span class="text-success fw-bolder" id="denivele-max"></span>
-                                            </li>
-                                            <li>
-                                                <span class="h8 text-gray-400 mb-0">moyenne:</span>
-                                                <span class="text-gray-400 fw-bolder" id="denivele-moyenne"></span>
-                                            </li>
-                                        </ul>
-                                    </div>      
-                                    <div>
-                                        <span class="h6 text-gray-400 mb-0">Cadence</span> 
-                                        <ul>
-                                            <li>
-                                                <span class="h8 text-gray-400 mb-0">min:</span>
-                                                <span class="text-danger fw-bolder" id="cadence-min"></span>
-                                            </li>
-                                            <li>
-                                                <span class="h8 text-gray-400 mb-0">max:</span>
-                                                <span class="text-success fw-bolder" id="cadence-max"></span>
-                                            </li>
-                                            <li>
-                                                <span class="h8 text-gray-400 mb-0">moyenne:</span>
-                                                <span class="text-gray-400 fw-bolder" id="cadence-moyenne"></span>
-                                            </li>
-                                        </ul>
-                                    </div>                                                                               
-                                </div> 
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwoAsc">
+                                <button class="accordion-button collapsed" id="asc_button_2" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseTwoAsc" aria-expanded="false"
+                                    aria-controls="collapseTwoAsc" style="font-size: 14px;">
+                                    <script>
+                                        document.getElementById("asc_button_2").innerHTML = last3ascensions[1][0]                                   
+                                    </script>
+                                </button>
+                            </h2>
+                            <div id="collapseTwoAsc" class="accordion-collapse collapse" aria-labelledby="headingTwoAsc"
+                                data-bs-parent="#accordionAscension">
+                                <div class="accordion-body" id="asc_content_2">
+                                    <script>
+                                        date = new Date(last3ascensions[1][4])
+                                        date = date.toLocaleString('fr-FR', {
+                                            weekday: 'long',
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric'
+                                        });
+
+                                        content = "<span class='text-black-600 fw-bolder'>" + date + '</span><br>'
+                                        content = content + "distance: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[1][1] / 1000).toFixed(2) + "km </span><br>"
+                                        content = content + "denivelé: <span class='text-gray-400 fw-bolder'>" + last3ascensions[1][3] + "m (% " + (last3ascensions[1][3] / last3ascensions[1][1] * 100).toFixed(2) + ")</span><br>"
+                                        t = last3ascensions[1][2]
+                                        h = Math.floor(t / 3600)
+                                        t = t % 3600
+                                        m = Math.floor(t / 60)
+                                        t = t % 60
+                                        content = content + "temps: <span class='text-gray-400 fw-bolder'>" + h + "h" + m + "'" + t + "''  (vit. asc.: " + (last3ascensions[1][3] / last3ascensions[1][2] * 3600).toFixed(0) + "m/h) </span><br>"
+                                        content = content + "vit. moy.: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[1][1] / last3ascensions[1][2] * 3.6).toFixed(2) + "km/h </span><br>"
+                                        document.getElementById("asc_content_2").innerHTML = content                                    
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingThreeAsc">
+                                <button class="accordion-button collapsed" id="asc_button_3" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseThreeAsc" aria-expanded="false"
+                                    aria-controls="collapseThreeAsc" style="font-size: 14px;">
+                                    <script>
+                                        document.getElementById("asc_button_3").innerHTML = last3ascensions[2][0]                                    
+                                    </script>
+                                </button>
+                            </h2>
+                            <div id="collapseThreeAsc" class="accordion-collapse collapse"
+                                aria-labelledby="headingThreeAsc" data-bs-parent="#accordionAscension">
+                                <div class="accordion-body" id="asc_content_3">
+                                    <script>
+                                        date = new Date(last3ascensions[2][4])
+                                        date = date.toLocaleString('fr-FR', {
+                                            weekday: 'long',
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric'
+                                        });
+
+                                        content = "<span class='text-black-600 fw-bolder'>" + date + '</span><br>'
+                                        content = content + "distance: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[2][1] / 1000).toFixed(2) + "km </span><br>"
+                                        content = content + "denivelé: <span class='text-gray-400 fw-bolder'>" + last3ascensions[2][3] + "m (% " + (last3ascensions[2][3] / last3ascensions[2][1] * 100).toFixed(2) + ") </span><br>"
+                                        t = last3ascensions[2][2]
+                                        h = Math.floor(t / 3600)
+                                        t = t % 3600
+                                        m = Math.floor(t / 60)
+                                        t = t % 60
+                                        content = content + "temps: <span class='text-gray-400 fw-bolder'>" + h + "h" + m + "'" + t + "''  (vit. asc.: " + (last3ascensions[2][3] / last3ascensions[2][2] * 3600).toFixed(0) + "m/h) </span><br>"
+                                        content = content + "vit. moy.: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[2][1] / last3ascensions[2][2] * 3.6).toFixed(2) + "km/h </span><br>"
+                                        document.getElementById("asc_content_3").innerHTML = content                                    
+                                    </script>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-4">
+            <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
+                <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                    <div class="d-block">
+                        <div>
+                            <span class="h6 text-black-400 mb-0" id="nom-segment">Stat. sorties</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-2" style="font-size: 14px;">
+                    <div>
+                        <span class="text-black-400 fw-bolder mb-0">Distance: </span>
+                        <div style="margin-left: 20px">
+                            <span class="h8 text-black-400 mb-0">min:</span>
+                            <span class="text-gray-400 fw-bolder" id="distance-min"></span>
+                            <span class="h8 text-black-400 mb-0"> <span style="font-size: 4px; color: black">
+                                    &#11044;</span> max:</span>
+                            <span class="text-gray-400 fw-bolder" id="distance-max"></span>
+                            <span class="h8 text-black-400 mb-0"> <span style="font-size: 4px; color: black">
+                                    &#11044;</span> moyenne:</span>
+                            <span class="text-gray-400 fw-bolder" id="distance-moyenne"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-black-400 fw-bolder mb-0" style='font-size: 14px;'>Vitesse: </span>
+                        <div style="margin-left: 20px">
+                            <span class="h8 text-black-400 mb-0">min:</span>
+                            <span class="text-gray-400 fw-bolder" id="vitesse-min"></span>
+                            <span class="h8 text-black-400 mb-0"> <span style="font-size: 4px; color: black">
+                                    &#11044;</span> max:</span>
+                            <span class="text-gray-400 fw-bolder" id="vitesse-max"></span>
+                            <span class="h8 text-black-400 mb-0"> <span style="font-size: 4px; color: black">
+                                    &#11044;</span> moyenne:</span>
+                            <span class="text-gray-400 fw-bolder" id="vitesse-moyenne"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-black-400 fw-bolder mb-0">Denivelé: </span>
+                        <div style="margin-left: 20px">
+                            <span class="h8 text-black-400 mb-0">min:</span>
+                            <span class="text-gray-400 fw-bolder" id="denivele-min"></span>
+                            <span class="h8 text-black-400 mb-0"> <span style="font-size: 4px; color: black">
+                                    &#11044;</span> max:</span>
+                            <span class="text-gray-400 fw-bolder" id="denivele-max"></span>
+                            <span class="h8 text-black-400 mb-0"> <span style="font-size: 4px; color: black">
+                                    &#11044;</span> moyenne:</span>
+                            <span class="text-gray-400 fw-bolder" id="denivele-moyenne"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-black-400 fw-bolder mb-0">Cadence: </span>
+                        <div style="margin-left: 20px">
+                            <span class="h8 text-black-400 mb-0">min:</span>
+                            <span class="text-gray-400 fw-bolder" id="cadence-min"></span>
+                            <span class="h8 text-black-400 mb-0"> <span style="font-size: 4px; color: black">
+                                    &#11044;</span> max:</span>
+                            <span class="text-gray-400 fw-bolder" id="cadence-max"></span>
+                            <span class="h8 text-black-400 mb-0"> <span style="font-size: 4px; color: black">
+                                    &#11044;</span> moyenne:</span>
+                            <span class="text-gray-400 fw-bolder" id="cadence-moyenne"></span>
+                        </div>
+                    </div>
+                </div>
 
-                <div class="col-12 col-xl-12">
-                    <div class="col-12 px-0 mb-4">
-                                <div class="card border-0 shadow">
-                                    <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
-                                        <div class="d-block">
-                                            <div>
-                                                <span class="h6 text-black-400 mb-0" id="nom-segment">Statistiques relatives aux ascensions</span> 
-                                            </div>                        
-                                        </div>                       
-                                    </div>
-                                    <div class="card-body p-2">                                    
-                                            <div> <span class="h6 text-gray-400 mb-0">&nbsp;</span> </div>
-                                                <div class="d-flex align-items-left justify-content-between  pb-3">
-                                                    <div>
-                                                        <span class="h6 text-gray-400 mb-0">Nb d'ascensions:</span> 
-                                                        <span class="text-gray-400 fw-bolder" id="nb-ascensions"></span>
-                                                    <br>
-                                                        <span class="h6 text-gray-400 mb-0">denivelé cumulé:</span> 
-                                                        <span class="text-gray-400 fw-bolder" id="deniv-ascensions"></span>
-                                                    <br>
-                                                        <span class="h6 text-gray-400 mb-0">Temps cumulé:</span> 
-                                                        <span class="text-gray-400 fw-bolder" id="tps-ascensions"></span>
-                                                    </div>
+            </div>
+            <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
+                <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                    <div class="d-block">
+                        <div>
+                            <span class="h6 text-black-400 mb-0" id="nom-segment">3 dernières activités </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-2" style='font-size: 14px'>
+                    <div class="accordion" id="accordionActivities">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOneAct">
+                                <button class="accordion-button collapsed" id="a_button_1" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseOneAct" aria-expanded="false"
+                                    aria-controls="collapseOneAct" style="font-size: 14px; display: flex; flex-wrap: wrap; white-space: pre;">
+                                    <script>
+                                        date = new Date(last3activities[0][5])
+                                        date = date.toLocaleString('fr-FR', {
+                                            year: 'numeric',
+                                            month: 'numeric',
+                                            day: 'numeric',
+                                        });
+                                        content="<div style='font-size:x-small; '>(<b>"
+                                        content = content + date + '</b> . '
+                                        content = content  + (last3activities[0][1] / 1000).toFixed(2) + "km . "
+                                        content = content + last3activities[0][3] + "m . "
+                                        t = last3activities[0][2]
+                                        h = Math.floor(t / 3600)
+                                        t = t % 3600
+                                        m = Math.floor(t / 60)
+                                        t = t % 60
+                                        content = content + h + "h" + m + "'" + t + "'' . "
+                                        content = content + (last3activities[0][4] * 3.6).toFixed(2) + "km/h"
+                                        content= last3activities[0][0]+"&nbsp;&nbsp;<br/>"+ content+")</div>"
+                                        document.getElementById("a_button_1").innerHTML =  content                                  
+                                    </script>
+                                </button>
+                            </h2>
+                            <div id="collapseOneAct" class="accordion-collapse collapse" aria-labelledby="headingOneAct"
+                                data-bs-parent="#accordionActivities">
+                                <div class="accordion-body" id="a_content_1">
+                                    <div id="map-div" style="width: 100%; height: 200px"></div>
+                                    <script>
+                                        mapDiv = document.getElementById("map-div");
 
-                                                <div>
-                                                <span class="h6 text-gray-400 mb-0">Vitesse Ascensionnelle</span> 
-                                                <ul>
-                                                    <li>
-                                                        <span class="h8 text-gray-400 mb-0">min:</span>
-                                                        <span class="text-danger fw-bolder" id="va-ascension-min"></span>
-                                                    </li>
-                                                    <li>
-                                                        <span class="h8 text-gray-400 mb-0">max:</span>
-                                                        <span class="text-success fw-bolder" id="va-ascension-max"></span>
-                                                    </li>
-                                                    <li>
-                                                        <span class="h8 text-gray-400 mb-0">moyenne:</span>
-                                                        <span class="text-gray-400 fw-bolder" id="va-ascension-moyenne"></span>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                            <div>
-                                                <span class="h6 text-gray-400 mb-0">Distance</span> 
-                                                <ul>                                      
-                                                    <li>
-                                                        <span class="h8 text-gray-400 mb-0">min:</span>
-                                                        <span class="text-danger fw-bolder" id="va-distance-min"></span>
-                                                    </li>
-                                                    <li>
-                                                        <span class="h8 text-gray-400 mb-0">max:</span>
-                                                        <span class="text-success fw-bolder" id="va-distance-max"></span>
-                                                    </li>
-                                                    <li>
-                                                        <span class="h8 text-gray-400 mb-0">moyenne:</span>
-                                                        <span class="text-gray-400 fw-bolder" id="va-distance-moyenne"></span>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                            <div>
-                                                <span class="h6 text-gray-400 mb-0">Vitesse</span> 
-                                                <ul>
-                                                    <li>
-                                                        <span class="h8 text-gray-400 mb-0">min:</span>
-                                                        <span class="text-danger fw-bolder" id="va-min"></span>
-                                                    </li>
-                                                    <li>
-                                                        <span class="h8 text-gray-400 mb-0">max:</span>
-                                                        <span class="text-success fw-bolder" id="va-max"></span>
-                                                    </li>
-                                                    <li>
-                                                        <span class="h8 text-gray-400 mb-0">moyenne:</span>
-                                                        <span class="text-gray-400 fw-bolder" id="va-moyenne"></span>
-                                                    </li>
-                                                </ul>
-                                            </div>                                                                               
-                                        </div>                
-                                    </div>
+                                        var map = new L.Map(mapDiv);
+                                        L.tileLayer(
+                                            'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                            {
+                                                attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+                                                maxZoom: 18
+                                            }
+                                        ).addTo(map);
+
+                                        var encoded = last3activities[0][8];
+                                        var polyline = L.Polyline.fromEncoded(encoded);
+                                        console.log("Pat Add dash=||"+encoded+"||")
+
+                                        polyline.addTo(map)
+                                      
+                                        map.fitBounds(polyline.getBounds());
+
+                                        // woraround to correctly disply leaflet tiles in an accordion
+                                        const resizeObserver = new ResizeObserver(() => {
+                                            map.invalidateSize();
+                                            map.fitBounds(polyline.getBounds());
+                                        });
+                                        resizeObserver.observe(mapDiv);
+                                    </script>
                                 </div>
                             </div>
                         </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwoAct">
+                                <button class="accordion-button collapsed" id="a_button_2" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseTwoAct" aria-expanded="false"
+                                    aria-controls="collapseTwoAct" style="font-size: 14px; display: flex; flex-wrap: wrap;">
+                                    <script>
+                                         date = new Date(last3activities[1][5])
+                                        date = date.toLocaleString('fr-FR', {
+                                            year: 'numeric',
+                                            month: 'numeric',
+                                            day: 'numeric',
+
+                                        });
+                                        content="<div style='font-size:x-small;'>(<b>"
+                                        content = content + date + '</b> . '
+                                        content = content  + (last3activities[1][1] / 1000).toFixed(2) + "km . "
+                                        content = content + last3activities[1][3] + "m . "
+                                        t = last3activities[1][2]
+                                        h = Math.floor(t / 3600)
+                                        t = t % 3600
+                                        m = Math.floor(t / 60)
+                                        t = t % 60
+                                        content = content + h + "h" + m + "'" + t + "'' . "
+                                        content = content + (last3activities[1][4] * 3.6).toFixed(2) + "km/h"
+                                        content=last3activities[1][0]+"&nbsp;&nbsp;<br>"+ content+")</div>"
+                                        document.getElementById("a_button_2").innerHTML =  content 
+                                    </script>
+                                </button>
+                            </h2>
+                            <div id="collapseTwoAct" class="accordion-collapse collapse" aria-labelledby="headingTwoAct"
+                                data-bs-parent="#accordionActivities">
+                                <div class="accordion-body" id="a_content_2">
+                                    <div id="map-div1" style="width: 100% ; height: 200px"></div>
+                                    <script>
+                                        mapDiv1 = document.getElementById("map-div1");
+
+                                        var map1 = new L.Map(mapDiv1);
+                                        L.tileLayer(
+                                            'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                            {
+                                                attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+                                                maxZoom: 18
+                                            }
+                                        ).addTo(map1);
+
+                                        var encoded1 = last3activities[1][8];
+                                        var polyline1 = L.Polyline.fromEncoded(encoded1).addTo(map1);
+
+                                        var polygon1 = L.Polygon.fromEncoded(encoded1).addTo(map1);
+                                        map1.fitBounds(polyline1.getBounds());
+
+                                        // woraround to correctly disply leaflet tiles in an accordion
+                                         const resizeObserver1 = new ResizeObserver(() => {
+                                            map1.invalidateSize();
+                                            map1.fitBounds(polyline1.getBounds());
+                                        });
+                                        resizeObserver1.observe(mapDiv1);
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingThreeAct">
+                                <button class="accordion-button collapsed" id="a_button_3" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseThreeAct" aria-expanded="false"
+                                    aria-controls="collapseThreeAct" style="font-size: 14px; display: flex; flex-wrap: wrap;">
+                                    <script>
+                                        date = new Date(last3activities[2][5])
+                                        date = date.toLocaleString('fr-FR', {
+                                            year: 'numeric',
+                                            month: 'numeric',
+                                            day: 'numeric',
+                                        });
+                                        content="<div style='font-size:x-small;'>(<b>"
+                                        content = content + date + '</b> . '
+                                        content = content  + (last3activities[2][1] / 1000).toFixed(2) + "km . "
+                                        content = content + last3activities[2][3] + "m . "
+                                        t = last3activities[0][2]
+                                        h = Math.floor(t / 3600)
+                                        t = t % 3600
+                                        m = Math.floor(t / 60)
+                                        t = t % 60
+                                        content = content + h + "h" + m + "'" + t + "'' . "
+                                        content = content + (last3activities[2][4] * 3.6).toFixed(2) + "km/h"
+                                        content=last3activities[2][0]+"&nbsp;&nbsp;<br>"+ content+")</div>"
+                                        document.getElementById("a_button_3").innerHTML =  content
+                                    </script>
+                                </button>
+                            </h2>
+                            <div id="collapseThreeAct" class="accordion-collapse collapse"
+                                aria-labelledby="headingThreeAct" data-bs-parent="#accordionActivities">
+                                <div class="accordion-body" id="a_content_3">
+                                    <div id="map-div2" style="width: 100%; height: 200px"></div>
+                                    <script>
+                                        mapDiv2 = document.getElementById("map-div2");
+
+                                        var map2 = new L.Map(mapDiv2);
+                                        L.tileLayer(
+                                            'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                            {
+                                                attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+                                                maxZoom: 18
+                                            }
+                                        ).addTo(map2);
+
+                                        var encoded2 = last3activities[2][8];
+                                        var polyline2 = L.Polyline.fromEncoded(encoded2).addTo(map2);
+
+                                        var polygon2 = L.Polygon.fromEncoded(encoded2).addTo(map2);
+                                        map2.fitBounds(polyline2.getBounds());
+
+                                        // woraround to correctly disply leaflet tiles in an accordion
+                                        const resizeObserver2 = new ResizeObserver(() => {
+                                            map2.invalidateSize();
+                                            map2.fitBounds(polyline2.getBounds());
+                                        });
+                                        resizeObserver2.observe(mapDiv2);
+
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-4">
+            <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
+                <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                    <div class="d-block">
+                        <div>
+                            <span class="h6 text-black-400 mb-0" id="nom-segment" data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="si &#9734; est cochée, seuls vos segments préférés sont pris en compte"><span
+                                    style="font-size: large;font-weight: light;color:darkcyan ">&#128712;</span> Stat.
+                                ascensions <input type="checkbox" class="star" id="starred" name="starred">
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="card-body p-2" style="font-size: 14px;">
+                    <div>
+                        <span class="text-black-400 fw-bolder  mb-0">Vitesse Ascensionnelle</span>
+                        <div style="margin-left: 20px">
+                            <span class="h8 text-black-400 mb-0">min:</span>
+                            <span class="text-gray-400 fw-bolder" id="va-ascension-min"></span>
+                            <span class="h8 text-black-400 mb-0"> <span style="font-size: 4px; color: black">
+                                    &#11044;</span> max:</span>
+                            <span class="text-gray-400 fw-bolder" id="va-ascension-max"></span>
+                            <span class="h8 text-black-400 mb-0"><span style="font-size: 4px ; color: black">
+                                    &#11044;</span> moyenne:</span>
+                            <span class="text-gray-400 fw-bolder" id="va-ascension-moyenne"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-black-400 fw-bolder  mb-0">Distance</span>
+                        <div style="margin-left: 20px">
+                            <span class="h8 text-black-400 mb-0">min:</span>
+                            <span class="text-gray-400 fw-bolder" id="va-distance-min"></span>
+                            <span class="h8 text-black-400 mb-0"> <span style="font-size: 4px; color: black">
+                                    &#11044;</span> max:</span>
+                            <span class="text-gray-400 fw-bolder" id="va-distance-max"></span>
+                            <span class="h8 text-black-400 mb-0"> <span style="font-size: 4px; color: black">
+                                    &#11044;</span> moyenne:</span>
+                            <span class="text-gray-400 fw-bolder" id="va-distance-moyenne"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-black-400 fw-bolder  mb-0">Vitesse</span>
+                        <div style="margin-left: 20px">
+                            <span class="h8 text-black-400 mb-0">min:</span>
+                            <span class="text-gray-400 fw-bolder" id="va-min"></span>
+                            <span class="h8 text-black-400 mb-0"> <span style="font-size: 4px; color: black">
+                                    &#11044;</span> max:</span>
+                            <span class="text-gray-400 fw-bolder" id="va-max"></span>
+                            <span class="h8 text-black-400 mb-0"> <span style="font-size: 4px; color: black">
+                                    &#11044;</span> moyenne:</span>
+                            <span class="text-gray-400 fw-bolder" id="va-moyenne"></span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
+                <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                    <div class="d-block">
+                        <div>
+                            <span class="h6 text-black-400 mb-0" id="nom-segment">Evolution</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-2" style="font-size: 14px;">
+                    <input type="radio" class="btn-check" name="period" id="semaine" autocomplete="off"
+                        onclick=updateTrend("week"); checked>
+                    <label class="btn btn-outline-primary btn-sm" for="semaine">semaine</label>
+                    <input type="radio" class="btn-check" name="period" id="mois" autocomplete="off"
+                        onclick=updateTrend("month");>
+                    <label class="btn btn-outline-primary btn-sm" for="mois">mois</label>
+                    <input type="radio" class="btn-check" name="period" id="annee" autocomplete="off"
+                        onclick=updateTrend("year");>
+                    <label class="btn btn-outline-primary btn-sm" for="annee">année</label>
+
+                    <div>
+                        <div style="float: left; width: 25%;">distance <span id="periode_d_e">
+                                &#x25B2; </span>
+                            <div id="periode_d"> </div>
+                        </div>
+
+                        <div style="float: left; width: 25%;">temps <span id="periode_t_e">&#x25BC;</span>
+                            <div id="periode_t"> </div>
+                        </div>
+
+                        <div style="float: left; width: 25%;">déniv. <span id="periode_dn_e">&#x25BC;</span>
+                            <div id="periode_dn"> </div>
+                        </div>
+
+                        <div style="float: left; width: 25%;">sorties <span id="periode_s_e">&#x25B2; </span>
+                            <div id="periode_s"> </div>
+                        </div>
+
+                    </div>
+                    <script>
+                        updateTrend("week")                       
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div> <!-- end 2nd row-->
+
+</div>
+
 {% endblock content %}
 
 <!-- Specific Page JS goes HERE  -->
+
 {% block javascripts %}
+
 <script>
+
+    const syncWait = ms => {
+        const end = Date.now() + ms
+        while (Date.now() < end) continue
+    }
+
+
+    // Select the checkbox element
+    var checkbox = document.getElementById('starred');
+
+    // Attach an event listener to the checkbox
+    checkbox.addEventListener('click', function () {
+        // Modify the URL to include the new argument
+        // Assuming the argument is a query parameter named 'arg'
+        var url = new URL(window.location.href);
+        if (this.checked) {
+            url.searchParams.set('starred', 'true'); // Set the new value for 'arg'
+        } else {
+            //url.searchParams.delete('starred'); // Remove 'arg' if unchecked
+            url.searchParams.set('starred', 'false');
+        }
+        window.location.replace(url.toString());
+    });
+
+
 
 
     function updateDashboardInfo() {
-        debd=document.getElementById('start').value 
-        endd=document.getElementById('end').value 
+        debd = document.getElementById('start').value
+        endd = document.getElementById('end').value
 
         if (debd == "") {
-            dateo=Date.parse("1970-01-01T12:59:26Z")
+            dateo = Date.parse("1970-01-01T12:59:26Z")
         } else {
-            dateo=Date.parse(debd)
+            dateo = Date.parse(debd)
         }
         if (endd == "") {
-            datef=Date.parse("2070-01-01T12:59:26Z")
+            datef = Date.parse("2070-01-01T12:59:26Z")
         } else {
-            datef=Date.parse(endd)
+            datef = Date.parse(endd)
         }
-        
-        f_distance=[]
-        f_moving_time=[]
-        f_elevation=[]
-        f_average_speed=[]
-        f_max_speed=[]
-        f_average_cadence=[]
-        f_average_temp=[]
-        f_gear_name=[]
-        f_gear_distance=[]
 
-        f_ascensions_distance=[]
-        f_ascensions_moving_time=[]
-        f_ascensions_elevation=[]
+        f_distance = []
+        f_moving_time = []
+        f_elevation = []
+        f_average_speed = []
+        f_max_speed = []
+        f_average_cadence = []
+        f_average_temp = []
+        f_gear_name = []
+        f_gear_distance = []
 
-        for (var i=0; i<activities_labels.length; i++) {
-            var d=Date.parse(activities_labels[i])
-            if (d>=dateo &&  d<=datef ) {
-                f_distance.push(distance[i])     
-                f_moving_time.push(moving_time[i])   
-                f_elevation.push(elevation[i])   
-                f_average_speed.push(average_speed[i])   
-                f_max_speed.push(max_speed[i])   
-                f_average_cadence.push(average_cadence[i])   
-                f_average_temp.push(average_temp[i])   
-                f_gear_name.push(gear_name[i])   
-                f_gear_distance.push(gear_distance[i])              
-            }    
-        }                       
+        f_ascensions_distance = []
+        f_ascensions_moving_time = []
+        f_ascensions_elevation = []
 
-        f_average_cadence=f_average_cadence.filter(function(e){return e})
-        var f_tot=f_distance.reduce((a, b) => a + b, 0)
-        var f_elev=f_elevation.reduce((a, b) => a + b, 0)
-        
-        for (var i=0; i<ascensions_labels.length; i++) {
-            var d=Date.parse(ascensions_labels[i])
-            if (d>=dateo &&  d<=datef ) {
-                f_ascensions_distance.push(ascensions_distance[i])     
-                f_ascensions_moving_time.push(ascensions_moving_time[i])   
-                f_ascensions_elevation.push(ascensions_elevation[i])               
-            }    
-        }            
+        for (var i = 0; i < activities_labels.length; i++) {
+            var d = Date.parse(activities_labels[i])
+            if (d >= dateo && d <= datef) {
+                f_distance.push(distance[i])
+                f_moving_time.push(moving_time[i])
+                f_elevation.push(elevation[i])
+                f_average_speed.push(average_speed[i])
+                f_max_speed.push(max_speed[i])
+                f_average_cadence.push(average_cadence[i])
+                f_average_temp.push(average_temp[i])
+                f_gear_name.push(gear_name[i])
+                f_gear_distance.push(gear_distance[i])
+            }
+        }
+
+        f_average_cadence = f_average_cadence.filter(function (e) { return e })
+        var f_tot = f_distance.reduce((a, b) => a + b, 0)
+        var f_elev = f_elevation.reduce((a, b) => a + b, 0)
+
+        for (var i = 0; i < ascensions_labels.length; i++) {
+            var d = Date.parse(ascensions_labels[i])
+            if (d >= dateo && d <= datef) {
+                f_ascensions_distance.push(ascensions_distance[i])
+                f_ascensions_moving_time.push(ascensions_moving_time[i])
+                f_ascensions_elevation.push(ascensions_elevation[i])
+            }
+        }
 
 
-        document.getElementById("distance-totale").innerText=(f_tot/1000).toFixed(0)+" km"
-        document.getElementById("elevation-total").innerText=(f_elev).toFixed(0)+" m"
-        document.getElementById("activities-total").innerText=f_distance.length
-        
-        var nbtotsec=f_moving_time.reduce((a, b) => a + b, 0)
-        var nbh=Math.floor(nbtotsec/3600)
-        var rs=nbtotsec%3600
-        var nbmin=Math.floor(rs/60)
-        var nbsec=rs%60
-        document.getElementById("tps-total").innerText=nbh+'h '+nbmin+"' "+nbsec+"''"
-        
-        document.getElementById("distance-min").innerText=(f_distance.reduce((x, y) => Math.min(x, y))/1000).toFixed(1)+" km"
-        document.getElementById("distance-max").innerText=(f_distance.reduce((x, y) => Math.max(x, y))/1000).toFixed(1)+" km"
-        document.getElementById("distance-moyenne").innerText=(f_tot/f_distance.length/1000).toFixed(1)+" km"
+        document.getElementById("distance-totale").innerText = (f_tot / 1000).toFixed(0) + " km"
+        document.getElementById("elevation-total").innerText = (f_elev).toFixed(0) + " m"
+        document.getElementById("activities-total").innerText = f_distance.length
 
-        document.getElementById("vitesse-min").innerText=(f_average_speed.reduce((x, y) => Math.min(x, y))*3.6).toFixed(2)+" km/h"
-        document.getElementById("vitesse-max").innerText=(f_average_speed.reduce((x, y) => Math.max(x, y))*3.6).toFixed(2)+" km/h"
-        document.getElementById("vitesse-moyenne").innerText=((f_average_speed.reduce((a, b) => a + b, 0))*3.6/f_average_speed.length).toFixed(2)+" km"
+        var nbtotsec = f_moving_time.reduce((a, b) => a + b, 0)
+        var nbh = Math.floor(nbtotsec / 3600)
+        var rs = nbtotsec % 3600
+        var nbmin = Math.floor(rs / 60)
+        var nbsec = rs % 60
+        document.getElementById("tps-total").innerText = nbh + 'h' + nbmin + "'" + nbsec + "''"
 
-        document.getElementById("denivele-min").innerText=(f_elevation.reduce((x, y) => Math.min(x, y))).toFixed(1)+" m"
-        document.getElementById("denivele-max").innerText=(f_elevation.reduce((x, y) => Math.max(x, y))).toFixed(1)+" m"
-        document.getElementById("denivele-moyenne").innerText=(f_elev/f_elevation.length).toFixed(1)+" m"
+        document.getElementById("distance-min").innerText = (f_distance.reduce((x, y) => Math.min(x, y)) / 1000).toFixed(1) + " km"
+        document.getElementById("distance-max").innerText = (f_distance.reduce((x, y) => Math.max(x, y)) / 1000).toFixed(1) + " km"
+        document.getElementById("distance-moyenne").innerText = (f_tot / f_distance.length / 1000).toFixed(1) + " km"
 
-        document.getElementById("cadence-min").innerText=(f_average_cadence.reduce((x, y) => Math.min(x, y))).toFixed(1)+" tr/m"
-        document.getElementById("cadence-max").innerText=(f_average_cadence.reduce((x, y) => Math.max(x, y))).toFixed(1)+" tr/m"
-        document.getElementById("cadence-moyenne").innerText=(f_average_cadence.reduce((a, b) => a + b, 0)/f_average_cadence.length).toFixed(1)+" tr/m"
+        document.getElementById("vitesse-min").innerText = (f_average_speed.reduce((x, y) => Math.min(x, y)) * 3.6).toFixed(2) + " km/h"
+        document.getElementById("vitesse-max").innerText = (f_average_speed.reduce((x, y) => Math.max(x, y)) * 3.6).toFixed(2) + " km/h"
+        document.getElementById("vitesse-moyenne").innerText = ((f_average_speed.reduce((a, b) => a + b, 0)) * 3.6 / f_average_speed.length).toFixed(2) + " km"
 
-        var f_as_mt=f_ascensions_moving_time.reduce((a, b) => a + b, 0)
-        var f_as_distance=f_ascensions_distance.reduce((a, b) => a + b, 0)
-        var f_as_elev=f_ascensions_elevation.reduce((a, b) => a + b, 0)
+        document.getElementById("denivele-min").innerText = (f_elevation.reduce((x, y) => Math.min(x, y))).toFixed(1) + " m"
+        document.getElementById("denivele-max").innerText = (f_elevation.reduce((x, y) => Math.max(x, y))).toFixed(1) + " m"
+        document.getElementById("denivele-moyenne").innerText = (f_elev / f_elevation.length).toFixed(1) + " m"
 
-        document.getElementById("nb-ascensions").innerText=f_ascensions_distance.length
-        document.getElementById("deniv-ascensions").innerText=f_as_elev+" m"
-        
-        var nbtotsec=f_ascensions_moving_time.reduce((a, b) => a + b, 0)
-        var nbh=Math.floor(nbtotsec/3600)
-        var rs=nbtotsec%3600
-        var nbmin=Math.floor(rs/60)
-        var nbsec=rs%60
-        document.getElementById("tps-ascensions").innerText=nbh+'h '+nbmin+"' "+nbsec+"''"
-    
-        document.getElementById("va-ascension-min").innerText=(minimum(f_ascensions_elevation,f_ascensions_moving_time)*3600).toFixed(0)+" m/h"
-        document.getElementById("va-ascension-max").innerText=(maximum(f_ascensions_elevation,f_ascensions_moving_time)*3600).toFixed(0)+" m/h"
-        document.getElementById("va-ascension-moyenne").innerText=(f_as_elev*3600/f_as_mt).toFixed(0)+" m/h"
+        if (f_average_cadence.length > 0) {
+            document.getElementById("cadence-min").innerText = (f_average_cadence.reduce((x, y) => Math.min(x, y))).toFixed(1) + " tr/m"
+            document.getElementById("cadence-max").innerText = (f_average_cadence.reduce((x, y) => Math.max(x, y))).toFixed(1) + " tr/m"
+            document.getElementById("cadence-moyenne").innerText = (f_average_cadence.reduce((a, b) => a + b, 0) / f_average_cadence.length).toFixed(1) + " tr/m"
+        }
+        var f_as_mt = f_ascensions_moving_time.reduce((a, b) => a + b, 0)
+        var f_as_distance = f_ascensions_distance.reduce((a, b) => a + b, 0)
+        var f_as_elev = f_ascensions_elevation.reduce((a, b) => a + b, 0)
 
-        document.getElementById("va-distance-min").innerText=(f_ascensions_distance.reduce((x, y) => Math.min(x, y))/1000).toFixed(1)+" km"
-        document.getElementById("va-distance-max").innerText=(f_ascensions_distance.reduce((x, y) => Math.max(x, y))/1000).toFixed(1)+" km"
-        document.getElementById("va-distance-moyenne").innerText=(f_as_distance/f_ascensions_distance.length/1000).toFixed(1)+" km"
+        document.getElementById("nb-ascensions").innerText = f_ascensions_distance.length
+        document.getElementById("deniv-ascensions").innerText = f_as_elev + " m (vit. asc.: " + (f_as_elev / f_as_mt * 3600).toFixed(0) + "m/h)"
 
-        document.getElementById("va-min").innerText=(minimum(f_ascensions_distance,f_ascensions_moving_time)*3.6).toFixed(1)+" km/h"
-        document.getElementById("va-max").innerText=(maximum(f_ascensions_distance,f_ascensions_moving_time)*3.6).toFixed(1)+" km/h"
-        document.getElementById("va-moyenne").innerText=((f_as_distance/f_as_mt)*3.6).toFixed(1)+" km/h"
+        var nbtotsec = f_ascensions_moving_time.reduce((a, b) => a + b, 0)
+        var nbh = Math.floor(nbtotsec / 3600)
+        var rs = nbtotsec % 3600
+        var nbmin = Math.floor(rs / 60)
+        var nbsec = rs % 60
+        document.getElementById("tps-ascensions").innerText = nbh + 'h' + nbmin + "'" + nbsec + "''"
+
+        document.getElementById("va-ascension-min").innerText = (minimum(f_ascensions_elevation, f_ascensions_moving_time) * 3600).toFixed(0) + " m/h"
+        document.getElementById("va-ascension-max").innerText = (maximum(f_ascensions_elevation, f_ascensions_moving_time) * 3600).toFixed(0) + " m/h"
+        document.getElementById("va-ascension-moyenne").innerText = (f_as_elev * 3600 / f_as_mt).toFixed(0) + " m/h"
+
+        document.getElementById("va-distance-min").innerText = (f_ascensions_distance.reduce((x, y) => Math.min(x, y)) / 1000).toFixed(1) + " km"
+        document.getElementById("va-distance-max").innerText = (f_ascensions_distance.reduce((x, y) => Math.max(x, y)) / 1000).toFixed(1) + " km"
+        document.getElementById("va-distance-moyenne").innerText = (f_as_distance / f_ascensions_distance.length / 1000).toFixed(1) + " km"
+
+        document.getElementById("va-min").innerText = (minimum(f_ascensions_distance, f_ascensions_moving_time) * 3.6).toFixed(1) + " km/h"
+        document.getElementById("va-max").innerText = (maximum(f_ascensions_distance, f_ascensions_moving_time) * 3.6).toFixed(1) + " km/h"
+        document.getElementById("va-moyenne").innerText = ((f_as_distance / f_as_mt) * 3.6).toFixed(1) + " km/h"
 
     }
 
-    function minimum(metric,moving_time) {
-        min=12000
-        for (var i = 0; i < metric.length; i++)  {
-            val=metric[i]/moving_time[i]
+    function minimum(metric, moving_time) {
+        min = 12000
+        for (var i = 0; i < metric.length; i++) {
+            val = metric[i] / moving_time[i]
             if (val < min) {
-                min=val
-            } 
+                min = val
+            }
         }
         return min
     }
 
-    function maximum(metric,moving_time) {
-        max=0
-        for (var i = 0; i < metric.length; i++)  {
-            val=metric[i]/moving_time[i]
+    function maximum(metric, moving_time) {
+        max = 0
+        for (var i = 0; i < metric.length; i++) {
+            val = metric[i] / moving_time[i]
             if (val > max) {
-                max=val
-            } 
+                max = val
+            }
         }
         return max
     }
 
     function createShortcut() {
-        da=new Date()
-        dor=2017
-        dc=document.getElementById('year_shortcut')
-        var cblist=[]
-        for (var i=dor; i<=da.getFullYear();i++ ){
+        da = new Date()
+        dor = 2017
+        dc = document.getElementById('year_shortcut')
+        var cblist = []
+        for (var i = dor; i <= da.getFullYear(); i++) {
             var newCheckbox = document.createElement("input");
             newCheckbox.type = "checkbox";
-            newCheckbox.myparam=i
-            newCheckbox.id="year"+i
+            newCheckbox.myparam = i
+            newCheckbox.id = "year" + i
             newCheckbox.addEventListener(
                 'change',
-                function(evt) { 
-                    
+                function (evt) {
+
                     if (this.checked == true) {
-                            for  (var j=dor-2017; j<=da.getFullYear()-2017;j++ ) {
-                                if (j+2017 != evt.currentTarget.myparam ) {
-                                    cblist[j].checked=false
-                                }
+                        for (var j = dor - 2017; j <= da.getFullYear() - 2017; j++) {
+                            if (j + 2017 != evt.currentTarget.myparam) {
+                                cblist[j].checked = false
                             }
-                            document.getElementById('start').value=evt.currentTarget.myparam+"-01-01"
-                            document.getElementById('start').max=(evt.currentTarget.myparam+1).toString()+"-01-01"
-                            document.getElementById('end').value=(evt.currentTarget.myparam+1).toString()+"-01-01"
-                            document.getElementById('end').min=evt.currentTarget.myparam+"-01-01"
-                            updateDashboardInfo()
-                        } else {
-                            document.getElementById('start').value=""
-                            document.getElementById('end').value=""
                         }
-                    },
+                        document.getElementById('start').value = evt.currentTarget.myparam + "-01-01"
+                        document.getElementById('start').max = (evt.currentTarget.myparam + 1).toString() + "-01-01"
+                        document.getElementById('end').value = (evt.currentTarget.myparam + 1).toString() + "-01-01"
+                        document.getElementById('end').min = evt.currentTarget.myparam + "-01-01"
+                        updateDashboardInfo()
+                    } else {
+                        document.getElementById('start').value = ""
+                        document.getElementById('end').value = ""
+                    }
+                },
             )
 
             cblist.push(newCheckbox)
@@ -454,89 +993,88 @@
             var label = document.createElement('label');
             label.htmlFor = i;
             label.appendChild(document.createTextNode(i));
-            label.style.paddingLeft="4px"
-            label.style.paddingRight="8px"
+            label.style.paddingLeft = "4px"
+            label.style.paddingRight = "8px"
             dc.appendChild(label);
-            }
+        }
     }
 
     //generate shortcut radio
     createShortcut()
 
+    distance = {{ distance | safe }}
+    moving_time = {{ moving_time | safe }}
+    elevation = {{ elevation | safe }}
+    average_speed = {{ average_speed | safe }}
+    max_speed = {{ max_speed | safe }}
+    average_cadence = {{ average_cadence | safe }}
+    r_average_cadence = average_cadence.filter(function (e) { return e })
+    average_temp = {{ average_temp | safe }}
+    gear_name = {{ gear_name | safe }}
+    gear_distance = {{ gear_distance | safe }}
+    activities_labels = {{ activities_labels | safe }}
 
-    distance={{ distance | safe }}
-    moving_time={{ moving_time | safe }}
-    elevation={{ elevation | safe }}
-    average_speed={{ average_speed | safe }}
-    max_speed={{ max_speed | safe }}
-    average_cadence={{ average_cadence | safe }}
-    r_average_cadence=average_cadence.filter(function(e){return e})
-    average_temp={{ average_temp | safe }}
-    gear_name={{ gear_name | safe }}
-    gear_distance={{ gear_distance | safe }}
-    activities_labels={{ activities_labels | safe }}
+
+    ascensions_distance = {{ ascensions_distance | safe }}
+    ascensions_moving_time = {{ ascensions_moving_time | safe }}
+    ascensions_elevation = {{ ascensions_elevation | safe }}
+    ascensions_labels = {{ ascensions_labels | safe }}
+
+    var tot = distance.reduce((a, b) => a + b, 0)
+    var elev = elevation.reduce((a, b) => a + b, 0)
 
 
-    ascensions_distance={{ ascensions_distance | safe }}
-    ascensions_moving_time={{ ascensions_moving_time | safe }}
-    ascensions_elevation={{ ascensions_elevation | safe }}
-    ascensions_labels={{ ascensions_labels | safe }}
+    document.getElementById("distance-totale").innerText = (tot / 1000).toFixed(0) + " km"
+    document.getElementById("elevation-total").innerText = (elev).toFixed(0) + " m"
+    document.getElementById("activities-total").innerText = distance.length
 
-    var tot=distance.reduce((a, b) => a + b, 0)
-    var elev=elevation.reduce((a, b) => a + b, 0)
-    
+    var nbtotsec = moving_time.reduce((a, b) => a + b, 0)
+    var nbh = Math.floor(nbtotsec / 3600)
+    var rs = nbtotsec % 3600
+    var nbmin = Math.floor(rs / 60)
+    var nbsec = rs % 60
+    document.getElementById("tps-total").innerText = nbh + 'h' + nbmin + "'" + nbsec + "''"
 
-    document.getElementById("distance-totale").innerText=(tot/1000).toFixed(0)+" km"
-    document.getElementById("elevation-total").innerText=(elev).toFixed(0)+" m"
-    document.getElementById("activities-total").innerText=distance.length
+    document.getElementById("distance-min").innerText = (distance.reduce((x, y) => Math.min(x, y)) / 1000).toFixed(1) + " km"
+    document.getElementById("distance-max").innerText = (distance.reduce((x, y) => Math.max(x, y)) / 1000).toFixed(1) + " km"
+    document.getElementById("distance-moyenne").innerText = (tot / distance.length / 1000).toFixed(1) + " km"
 
-    var nbtotsec=moving_time.reduce((a, b) => a + b, 0)
-    var nbh=Math.floor(nbtotsec/3600)
-    var rs=nbtotsec%3600
-    var nbmin=Math.floor(rs/60)
-    var nbsec=rs%60
-    document.getElementById("tps-total").innerText=nbh+'h '+nbmin+"' "+nbsec+"''"
+    document.getElementById("vitesse-min").innerText = (average_speed.reduce((x, y) => Math.min(x, y)) * 3.6).toFixed(2) + " km/h"
+    document.getElementById("vitesse-max").innerText = (average_speed.reduce((x, y) => Math.max(x, y)) * 3.6).toFixed(2) + " km/h"
+    document.getElementById("vitesse-moyenne").innerText = ((average_speed.reduce((a, b) => a + b, 0)) * 3.6 / average_speed.length).toFixed(2) + " km"
 
-    document.getElementById("distance-min").innerText=(distance.reduce((x, y) => Math.min(x, y))/1000).toFixed(1)+" km"
-    document.getElementById("distance-max").innerText=(distance.reduce((x, y) => Math.max(x, y))/1000).toFixed(1)+" km"
-    document.getElementById("distance-moyenne").innerText=(tot/distance.length/1000).toFixed(1)+" km"
+    document.getElementById("denivele-min").innerText = (elevation.reduce((x, y) => Math.min(x, y))).toFixed(1) + " m"
+    document.getElementById("denivele-max").innerText = (elevation.reduce((x, y) => Math.max(x, y))).toFixed(1) + " m"
+    document.getElementById("denivele-moyenne").innerText = (elev / elevation.length).toFixed(1) + " m"
 
-    document.getElementById("vitesse-min").innerText=(average_speed.reduce((x, y) => Math.min(x, y))*3.6).toFixed(2)+" km/h"
-    document.getElementById("vitesse-max").innerText=(average_speed.reduce((x, y) => Math.max(x, y))*3.6).toFixed(2)+" km/h"
-    document.getElementById("vitesse-moyenne").innerText=((average_speed.reduce((a, b) => a + b, 0))*3.6/average_speed.length).toFixed(2)+" km"
+    if (r_average_cadence.length > 0) {
+        document.getElementById("cadence-min").innerText = (r_average_cadence.reduce((x, y) => Math.min(x, y))).toFixed(1) + " tr/m"
+        document.getElementById("cadence-max").innerText = (r_average_cadence.reduce((x, y) => Math.max(x, y))).toFixed(1) + " tr/m"
+        document.getElementById("cadence-moyenne").innerText = (r_average_cadence.reduce((a, b) => a + b, 0) / r_average_cadence.length).toFixed(1) + " tr/m"
+    }
+    var as_mt = ascensions_moving_time.reduce((a, b) => a + b, 0)
+    var as_distance = ascensions_distance.reduce((a, b) => a + b, 0)
+    var as_elev = ascensions_elevation.reduce((a, b) => a + b, 0)
+    document.getElementById("nb-ascensions").innerText = ascensions_distance.length
+    document.getElementById("deniv-ascensions").innerText = as_elev + " m (vit. asc.: " + (as_elev / as_mt * 3600).toFixed(0) + "m/h)"
 
-    document.getElementById("denivele-min").innerText=(elevation.reduce((x, y) => Math.min(x, y))).toFixed(1)+" m"
-    document.getElementById("denivele-max").innerText=(elevation.reduce((x, y) => Math.max(x, y))).toFixed(1)+" m"
-    document.getElementById("denivele-moyenne").innerText=(elev/elevation.length).toFixed(1)+" m"
+    var nbtotsec = ascensions_moving_time.reduce((a, b) => a + b, 0)
+    var nbh = Math.floor(nbtotsec / 3600)
+    var rs = nbtotsec % 3600
+    var nbmin = Math.floor(rs / 60)
+    var nbsec = rs % 60
+    document.getElementById("tps-ascensions").innerText = nbh + 'h' + nbmin + "'" + nbsec + "''"
+    document.getElementById("va-ascension-min").innerText = (minimum(ascensions_elevation, ascensions_moving_time) * 3600).toFixed(0) + " m/h"
+    document.getElementById("va-ascension-max").innerText = (maximum(ascensions_elevation, ascensions_moving_time) * 3600).toFixed(0) + " m/h"
+    document.getElementById("va-ascension-moyenne").innerText = (as_elev * 3600 / as_mt).toFixed(0) + " m/h"
 
-    document.getElementById("cadence-min").innerText=(r_average_cadence.reduce((x, y) => Math.min(x, y))).toFixed(1)+" tr/m"
-    document.getElementById("cadence-max").innerText=(r_average_cadence.reduce((x, y) => Math.max(x, y))).toFixed(1)+" tr/m"
-    document.getElementById("cadence-moyenne").innerText=(r_average_cadence.reduce((a, b) => a + b, 0)/r_average_cadence.length).toFixed(1)+" tr/m"
+    document.getElementById("va-distance-min").innerText = (ascensions_distance.reduce((x, y) => Math.min(x, y)) / 1000).toFixed(1) + " km"
+    document.getElementById("va-distance-max").innerText = (ascensions_distance.reduce((x, y) => Math.max(x, y)) / 1000).toFixed(1) + " km"
+    document.getElementById("va-distance-moyenne").innerText = (as_distance / ascensions_distance.length / 1000).toFixed(1) + " km"
 
-    var as_mt=ascensions_moving_time.reduce((a, b) => a + b, 0)
-    var as_distance=ascensions_distance.reduce((a, b) => a + b, 0)
-    var as_elev=ascensions_elevation.reduce((a, b) => a + b, 0)
-
-    document.getElementById("nb-ascensions").innerText=ascensions_distance.length
-    document.getElementById("deniv-ascensions").innerText=as_elev+" m"
-
-    var nbtotsec=ascensions_moving_time.reduce((a, b) => a + b, 0)
-    var nbh=Math.floor(nbtotsec/3600)
-    var rs=nbtotsec%3600
-    var nbmin=Math.floor(rs/60)
-    var nbsec=rs%60
-    document.getElementById("tps-ascensions").innerText=nbh+'h '+nbmin+"' "+nbsec+"''"
-    document.getElementById("va-ascension-min").innerText=(minimum(ascensions_elevation,ascensions_moving_time)*3600).toFixed(0)+" m/h"
-    document.getElementById("va-ascension-max").innerText=(maximum(ascensions_elevation,ascensions_moving_time)*3600).toFixed(0)+" m/h"
-    document.getElementById("va-ascension-moyenne").innerText=(as_elev*3600/as_mt).toFixed(0)+" m/h"
-
-    document.getElementById("va-distance-min").innerText=(ascensions_distance.reduce((x, y) => Math.min(x, y))/1000).toFixed(1)+" km"
-    document.getElementById("va-distance-max").innerText=(ascensions_distance.reduce((x, y) => Math.max(x, y))/1000).toFixed(1)+" km"
-    document.getElementById("va-distance-moyenne").innerText=(as_distance/ascensions_distance.length/1000).toFixed(1)+" km"
-
-    document.getElementById("va-min").innerText=(minimum(ascensions_distance,ascensions_moving_time)*3.6).toFixed(1)+" km/h"
-    document.getElementById("va-max").innerText=(maximum(ascensions_distance,ascensions_moving_time)*3.6).toFixed(1)+" km/h"
-    document.getElementById("va-moyenne").innerText=((as_distance/as_mt)*3.6).toFixed(1)+" km/h"
+    document.getElementById("va-min").innerText = (minimum(ascensions_distance, ascensions_moving_time) * 3.6).toFixed(1) + " km/h"
+    document.getElementById("va-max").innerText = (maximum(ascensions_distance, ascensions_moving_time) * 3.6).toFixed(1) + " km/h"
+    document.getElementById("va-moyenne").innerText = ((as_distance / as_mt) * 3.6).toFixed(1) + " km/h"
 
 </script>
 {% endblock javascripts %}

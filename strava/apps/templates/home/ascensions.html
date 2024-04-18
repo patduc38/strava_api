@@ -77,42 +77,38 @@
 </script>
 
 
-    <div class="row">
-        <div class="col-12 mb-4">
-            <div class="card bg-yellow-100 border-0 shadow">
-                <div class="card-header d-sm-flex flex-row align-items-center flex-0">
-                    <div class="d-block mb-3 mb-sm-0">
-                        <div class="fs-5 fw-normal mb-2" id="segment-name"></div>
-                        <div class="small mt-2"> 
-                            <span class="fw-normal me-2">Best</span>                              
-                            <span class="text-success fw-bold" id="best-time"></span>
-                            <span class="fw-normal me-2">&nbsp;&nbsp; Worst</span>                              
-                            <span class="text-danger fw-bold" id="worst-time"></span>
-                            <span id="hidden-sid" style="visibility: hidden">5855232</span>
-                        </div>
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card bg-yellow-100 border-0 shadow">
+            <div class="card-header d-sm-flex flex-row align-items-center flex-0">
+                <div class="d-block mb-3 mb-sm-0">
+                    <div class="fs-5 fw-normal mb-2" id="segment-name"></div>
+                    <div class="small mt-2">
+                        <span class="fw-normal me-2">Best</span>
+                        <span class="text-success fw-bold" id="best-time"></span>
+                        <span class="fw-normal me-2">&nbsp;&nbsp; Worst</span>
+                        <span class="text-danger fw-bold" id="worst-time"></span>
+                        <span id="hidden-sid" style="visibility: hidden">5855232</span>
                     </div>
-                    <div class="d-block ms-auto">
-                        <label for="start">Start date:</label>
-                        <input type="date" id="start" name="start"
-                            value=""
-                            min="2017-01-01" max=""
-                            onBlur="updateEndMin();">
+                </div>
+                <div class="d-block ms-auto">
+                    <label for="start">Start date:</label>
+                    <input type="date" id="start" name="start" value="" min="2017-01-01" max=""
+                        onBlur="updateEndMin();">
 
-                        <label for="end" style="margin: 0px 0px 0px 20px;">End date: </label>
-                        <input type="date" id="end" name="end"
-                                value=""
-                                min="2017-01-01"
-                                onBlur="updateStartMax(); ">
-                        <button type="submit"  id="button" onclick="updateSegmentInfo()">filter</button>
-                        <div class="small mt-2" id="year_shortcut"></div>
-
-                    </div>
+                    <label for="end" style="margin: 0px 0px 0px 20px;">End date: </label>
+                    <input type="date" id="end" name="end" value="" min="2017-01-01" onBlur="updateStartMax(); ">
+                    <button type="submit" id="button" onclick="updateSegmentInfo()">filter</button>
+                    <div class="small mt-2" id="year_shortcut"></div>
 
                 </div>
-                <iframe  src=about:blank  id="graphframe" name="graphframe" height="470px" width="100%" title="Graph frame"></iframe>
+
             </div>
+            <iframe src=about:blank id="graphframe" name="graphframe" height="470px" width="100%"
+                title="Graph frame"></iframe>
         </div>
-    
+    </div>
+
     <div class="row">
         <div class="col-12 col-xl-8">
             <div class="row">
@@ -121,31 +117,43 @@
                         <div class="card-header">
                             <div class="row align-items-center">
                                 <div class="col">
-                                    <h2 class="fs-5 fw-bold mb-0">Explorateur</h2>
+                                    <h2 class="fs-5 fw-bold mb-0">Explorateur de segments</h2>
                                 </div>
                                 <div class="col text-end">
                                     <div class="input-group">
-                                        <input type="text" class="form-control" id="search-segment" placeholder="Search" aria-label="Search">
+                                        <input type="text" class="form-control" id="search-segment" placeholder="Search"
+                                            aria-label="Search">
                                         <span class="input-group-text" id="basic-addon2">
-                                            <button class="btn btn-sm btn-primary" type="button" onclick="reload_filtered_page();   return false;"> <svg class="icon icon-xs text-white-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" ></path></svg></button>                                              
+                                            <button class="btn btn-sm btn-primary" type="button"
+                                                onclick="reload_filtered_page();   return false;"> <svg
+                                                    class="icon icon-xs text-white-600" fill="currentColor"
+                                                    viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                                    <path fill-rule="evenodd"
+                                                        d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                                                        clip-rule="evenodd"></path>
+                                                </svg></button>
                                         </span>
-                                        <span> </span>&nbsp;&nbsp;</span><input type="checkbox" class="star" id="starred" name="starred">
+                                        <span> </span>&nbsp;&nbsp;</span><input type="checkbox" class="star"
+                                            id="starred" name="starred">
                                     </div>
                                 </div>
-                                
+
                             </div>
                         </div>
-                        <iframe  src="about:blank" id="listframe" name="listframe" height="290px" width="100%" title="list frame"></iframe>
+                        <iframe src="about:blank" id="listframe" name="listframe" height="290px" width="100%"
+                            title="list frame"></iframe>
                     </div>
                 </div>
 
                 <script>
-                    starred="{{starred|safe}}"
-                    pattern="{{pattern|safe}}"
-                    mode="{{mode|safe}}"
-                    
-                    var iframe = document.getElementById( "listframe" )
-                    iframe.src = "/list?pattern="+pattern+"&starred="+starred+"&mode="+mode
+                    starred = "{{starred|safe}}"
+                    pattern = "{{pattern|safe}}"
+                    mode = "{{mode|safe}}"
+                    higher_segment = "{{ higher_segment|safe}}"
+                    higher_segment_name = "{{ higher_segment_name|safe}}"
+
+                    var iframe = document.getElementById("listframe")
+                    iframe.src = "/list?pattern=" + pattern + "&starred=" + starred + "&mode=" + mode
                 </script>
             </div>
         </div>
@@ -155,71 +163,87 @@
                     <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
                         <div class="d-block">
                             <div>
-                                <span class="h6 text-black-400 mb-0" id="nom-segment">Mon ascension</span> 
-                            </div>                        
-                        </div>                       
+                                <span class="h6 text-black-400 mb-0" id="nom-segment">Mon ascension </span>
+                                <a class="dropdown-item rounded-top" id="strava-link" href="#"></a>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body p-2">
                         <div>
-                            <span class="h6 text-gray-400 mb-0">Distance:</span> 
-                            <span class="text-success fw-bolder" id="distance-ascension"></span>
+                            <span class="h6 text-gray-400 mb-0">Distance:</span>
+                            <span style="color:deepskyblue; font-size:12px;" id="distance-ascension"></span>
                         </div>
                         <div>
-                            <span class="h6 text-gray-400 mb-0">Dénivelé:</span> 
-                            <span class="text-success fw-bolder" id="elevation-ascension"></span>
+                            <span class="h6 text-gray-400 mb-0">Dénivelé:</span>
+                            <span style="color:deepskyblue; font-size:12px;" id="elevation-ascension"></span>
                         </div>
                         <div>
-                            <span class="h6 text-gray-400 mb-0">Nb d'ascensions:</span> 
-                            <span class="text-success fw-bolder" id="nb-ascensions"></span>
+                            <span class="h6 text-gray-400 mb-0">Nb d'ascensions:</span>
+                            <span style="color:deepskyblue; font-size:12px;" id="nb-ascensions"></span>
                         </div>
                         <div> <span class="h6 text-gray-400 mb-0">&nbsp;</span> </div>
                         <div class="d-flex align-items-center justify-content-between  pb-3">
-                        <div>
-                            <span class="h6 text-gray-400 mb-0">Vitesse Ascensionnelle</span> 
-                            <ul>
-                                <li>
-                                    <span class="h8 text-gray-400 mb-0">min:</span>
-                                    <span class="text-success fw-bolder" id="va-ascension-min"></span>
-                                </li>
-                                <li>
-                                    <span class="h8 text-gray-400 mb-0">max:</span>
-                                    <span class="text-success fw-bolder" id="va-ascension-max"></span>
-                                </li>
-                                <li>
-                                    <span class="h8 text-gray-400 mb-0">moyenne:</span>
-                                    <span class="text-success fw-bolder" id="va-ascension-moyenne"></span>
-                                </li>
-                            </ul>
+                            <div>
+                                <span class="h6 text-gray-400 mb-0">Vitesse Ascensionnelle</span>
+                                <ul>
+                                    <li>
+                                        <span class="h8 text-gray-400 mb-0">min:</span>
+                                        <span style="color:deepskyblue; font-size:12px;" id="va-ascension-min"></span>
+                                    </li>
+                                    <li>
+                                        <span class="h8 text-gray-400 mb-0">max:</span>
+                                        <span style="color:deepskyblue; font-size:12px;" id="va-ascension-max"></span>
+                                    </li>
+                                    <li>
+                                        <span class="h8 text-gray-400 mb-0">moyenne:</span>
+                                        <span style="color:deepskyblue; font-size:12px;" id="va-ascension-moyenne"></span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div>
+                                <span class="h6 text-gray-400 mb-0">Vitesse</span>
+                                <ul>
+                                    <li>
+                                        <span class="h8 text-gray-400 mb-0">min:</span>
+                                        <span style="color:deepskyblue; font-size:12px;" id="vitesse-ascension-min"></span>
+                                    </li>
+                                    <li>
+                                        <span class="h8 text-gray-400 mb-0">max:</span>
+                                        <span style="color:deepskyblue; font-size:12px;" id="vitesse-ascension-max"></span>
+                                    </li>
+                                    <li>
+                                        <span class="h8 text-gray-400 mb-0">moyenne:</span>
+                                        <span style="color:deepskyblue; font-size:12px;" id="vitesse-ascension-moyenne"></span>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
-                        <div>
-                            <span class="h6 text-gray-400 mb-0">Vitesse</span> 
-                            <ul>
-                                <li>
-                                    <span class="h8 text-gray-400 mb-0">min:</span>
-                                    <span class="text-success fw-bolder" id="vitesse-ascension-min"></span>
-                                </li>
-                                <li>
-                                    <span class="h8 text-gray-400 mb-0">max:</span>
-                                    <span class="text-success fw-bolder" id="vitesse-ascension-max"></span>
-                                </li>
-                                <li>
-                                    <span class="h8 text-gray-400 mb-0">moyenne:</span>
-                                    <span class="text-success fw-bolder" id="vitesse-ascension-moyenne"></span>
-                                </li>
-                            </ul>
-                        </div>
-                        </div>                
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
 {% endblock content %}
 
 <!-- Specific Page JS goes HERE  -->
 {% block javascripts %}
 <script>
+     if (higher_segment > 0) {
+        document.getElementById("hidden-sid").innerHTML=higher_segment
+        document.getElementById("segment-name").innerHTML=higher_segment_name
+        document.getElementById("nom-segment").innerHTML=higher_segment_name
+        sn = document.getElementById("strava-link");
+        sn.textContent="(strava segment)";                         
+                        // Set the title.
+        sn.title = "strava segment"; 
+        sn.target="_blank"
+                        // Set the href property.
+        sn.href = "https://www.strava.com/segments/" +higher_segment;      
+        updateSegmentInfo() 
+        }
+
     function createShortcut() {
         da=new Date()
         dor=2017
@@ -270,6 +294,7 @@
         debd=document.getElementById('start').value 
         endd=document.getElementById('end').value 
         var win=document.getElementById('graphframe')    
+        console.log("Pat Add 3 ","/graph?sid="+document.getElementById("hidden-sid").innerHTML+"&name="+document.getElementById("segment-name").innerHTML+"&deb="+debd+"&fin="+endd)
         win.src="/graph?sid="+document.getElementById("hidden-sid").innerHTML+"&name="+document.getElementById("segment-name").innerHTML+"&deb="+debd+"&fin="+endd          
     }
 

@@ -1,3 +1,5 @@
 __pycache__
 volt_venv
 strava.code-workspace
+/strava_tokens.json
+/es3.py
