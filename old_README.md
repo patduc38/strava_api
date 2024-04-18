@@ -1,4 +1,6 @@
 # strava_api
+!! Note: this is the initial readme where the interaction with strava was done only via python script. Now this is a flask webapp that interacts with Strava. readme file has not yet been written 
+
 
 This is a very dirty code to connect to strava API to collect my info (the goal will be to compute additional statistic from these raw data) 
 
