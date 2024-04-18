@@ -86,7 +86,7 @@
                         // Create the text node for anchor element.
                         var link = window.parent.document.createTextNode("(strava segment)");                        
                         // Append the text node to anchor element.
-                        sn.textContent="(strava segment)";                         
+                        sn.innerHTML="<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20px\" height=\"20px\" aria-label=\"Strava\" role=\"img\" viewBox=\"0 0 512 512\"><rect width=\"512\" height=\"512\" rx=\"15%\" fill=\"#fc4c01\"/><path fill=\"#ffffff\" d=\"M120 288L232 56l112 232h-72l-40-96-40 96z\"/><path fill=\"#fda580\" d=\"M280 288l32 72 32-72h48l-80 168-80-168z\"/></svg> <span style=\"font-size: small;\"> (segment Strava) </span>";                                                 
                         // Set the title.
                         sn.title = "strava segment"; 
                         sn.target="_blank"
