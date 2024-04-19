@@ -16,22 +16,27 @@ You can also install the server in your own local environment. This operation is
 
 ## Dashboard 
 if you browse the "Dashboard" section, you get a summary of your strava activities (Ride only so far). Various statistics information are available such as info regarding your activities, your climbs and also trends for the past week, month or year. You also get a summary of your last 3 activities and climbs.  
+
 ![Capture1](https://github.com/patduc38/strava_api/assets/16572059/f4d1ad7f-693f-45d6-a8d6-e61f56b446d6)
 
 ## Activities display 
 if you browse the "Activités" section, a table of all your activities is displayed with  related information (distance, time, elevation...). If you click on an activity, the corresponding map is displayed 
+
 ![Capture2](https://github.com/patduc38/strava_api/assets/16572059/a5f65b80-1753-4cb0-a8e5-0f156dd7bc94)
 
 ## Climb display 
 if you browse the "Ascensions" section, you get all strava segments corresponding to your climbs. You can select each segment and display related statistics (elevation, distance numnber of escalation, time..) and a graph of all climbs of that segment is displayed with additional information such as best and worse time or average time. 
+
 ![Capture3](https://github.com/patduc38/strava_api/assets/16572059/19f3e42b-bd1b-4acc-810a-2c1b17f0e36f)
 
 ## Graph 
 if you browse "Statistiques" section, you get a graph displaying metrics (distance, elevation, number) of your activities. You can select different years to compare the activities in a graphical way
+
 ![Capture5](https://github.com/patduc38/strava_api/assets/16572059/3d8daf69-13bb-424f-a0c7-af2eb24839cd)
 
 ## Heatmap 
 if you browse "Heatmap", a map with all your activities (Rides in blue, walks in red) is displayed 
+
 ![Capture6](https://github.com/patduc38/strava_api/assets/16572059/069c8d9c-959f-4fcf-b2aa-e2c7987204f9)
 
 ## Synchronization with strava
