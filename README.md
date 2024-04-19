@@ -4,8 +4,11 @@ A flask based server to display analyse Strava data
 ## Introduction
 The Strava dashboard tool aims to use your strava tool to display your own dashboard, an analysis 
 
-## Installation
-to be done
+## Installation/access
+if you want to have a try, you can send me a message (patduc38@gmail.com) and I can provide you the url of a running site.
+
+**TODO: explain hos to setup the server**  
+You can also install the server in your own local environment. This operation is not yet documented. Basically you have to setup the configuration of the internal sqlite db and start the flask application. 
 
 ## login (with your username/password or via strava) 
 ![Capture](https://github.com/patduc38/strava_api/assets/16572059/5e592a77-81b1-4a7f-b84d-1db0b6c9f4b7)
@@ -30,3 +33,5 @@ if you browse "Statistiques" section, you get a graph displaying metrics (distan
 if you browse "Heatmap", a map with all your activities (Rides in blue, walks in red) is displayed 
 ![Capture6](https://github.com/patduc38/strava_api/assets/16572059/069c8d9c-959f-4fcf-b2aa-e2c7987204f9)
 
+## Synchronization with strava
+in the "Sync" section, you can synchronize with strava and retrieve your last strava activities.The first synchronization could be long depending on the number of activities you have on strava. There is some quota restrictions to access the strava Api, so depending on the number of activities you have on strava and the number of requests already sent to strava API, you may not get all your activities. In that case you have to retry later (2 types of quota are setup for the strava api, per day and every 15 minutes). 
