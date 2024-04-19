@@ -28,7 +28,7 @@ if you browse the "Ascensions" section, you get all strava segments correspondin
 
 ## Graph 
 if you browse "Statistiques" section, you get a graph displaying metrics (distance, elevation, number) of your activities. You can select different years to compare the activities in a graphical way
-![Capture5](https://github.com/patduc38/strava_api/assets/16572059/da09a2cd-59a6-41ef-9ea9-a52b9743d54c)
+![Capture5](https://github.com/patduc38/strava_api/assets/16572059/3d8daf69-13bb-424f-a0c7-af2eb24839cd)
 
 ## Heatmap 
 if you browse "Heatmap", a map with all your activities (Rides in blue, walks in red) is displayed 
