@@ -1,9 +1,10 @@
 # to get activities 
+!! the instructions below was the very first way to synchronize strava activities. This step is now much more simple and is done from the web app itself
 
-pi@raspberrypi:~/strava_api/strava $ cd /home/pi/strava_api/strava
-pi@raspberrypi:~/strava_api/strava $ source strava_python-env/bin/activate
-(strava_python-env) pi@raspberrypi:python get_all_activities_segments.py treat
-(strava_python-env) pi@raspberrypi:~/strava_api/strava $ python retrieve.py
+#>:~/strava_api/strava $ cd /home/pi/strava_api/strava
+#>:~/strava_api/strava $ source strava_python-env/bin/activate
+(strava_python-env) #>:python get_all_activities_segments.py treat
+(strava_python-env) #>:~/strava_api/strava $ python retrieve.py
 
 # to launch server
 
