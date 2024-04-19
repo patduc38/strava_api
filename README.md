@@ -5,7 +5,8 @@ A flask based server to display analyse Strava data
 The Strava dashboard tool aims to use your strava tool to display your own dashboard, an analysis 
 
 ## Installation/access
-if you want to have a try, you can send me a message (patduc38@gmail.com) and I can provide you the url of a running site.
+if you want to have a try, you can send me a message (patduc38@gmail.com) and I'll provide you the url of a running site. 
+This iniital version is on french only, I may add english langage as well in the next version
 
 **TODO: explain hos to setup the server**  
 You can also install the server in your own local environment. This operation is not yet documented. Basically you have to setup the configuration of the internal sqlite db and start the flask application. 
