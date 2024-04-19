@@ -15,7 +15,7 @@ You can also install the server in your own local environment. This operation is
 
 ## Dashboard 
 if you browse the "Dashboard" section, you get a summary of your strava activities (Ride only so far). Various statistics information are available such as info regarding your activities, your climbs and also trends for the past week, month or year. You also get a summary of your last 3 activities and climbs.  
-![Capture1](https://github.com/patduc38/strava_api/assets/16572059/47429fd5-b759-4fc5-ace7-b56fc5ea0cb0)
+![Capture1](https://github.com/patduc38/strava_api/assets/16572059/f4d1ad7f-693f-45d6-a8d6-e61f56b446d6)
 
 ## Activities display 
 if you browse the "Activités" section, a table of all your activities is displayed with  related information (distance, time, elevation...). If you click on an activity, the corresponding map is displayed 
