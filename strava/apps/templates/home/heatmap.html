@@ -3,7 +3,14 @@
 {% block title %} work in progress {% endblock %} 
 
 <!-- Specific Page CSS goes HERE  -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+  <style>
+    .leaflet-tile-pane {
+      -webkit-filter: grayscale(100%);
+      filter: grayscale(100%);
+    }
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
 

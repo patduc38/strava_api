@@ -1,0 +1,309 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+<style>
+    .leaflet-tile-pane {
+        -webkit-filter: grayscale(100%);
+        filter: grayscale(100%);
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.js"
+    integrity="sha256-MPXjTSEImVJI1834JAHubdK7Lts1VTUPJmCQ9zKAjyA=" crossorigin="anonymous">
+    </script>
+<link href="https://getbootstrap.com/docs/5.2/assets/css/docs.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="/static/assets//Leaflet.encoded/Polyline.encoded.js"></script>
+
+
+
+<div class="row">
+    <div id="paper1" style="height:700px; overflow-y: auto; "></div>
+</div>
+<div style="margin-top:5px"> </div>
+<div class="row" style="width: auto; flex-wrap: nowrap; align-items: center">
+    <div id="map" style="width: 50%; height: 200px; display: inline-block;"></div>
+    &nbsp; &nbsp;<button class="btn btn-outline-primary btn-sm"
+        style="display: inline-block; width: auto; background-color: lightgray" onclick="history.back()">Retour aux
+        ascensions</button>
+</div>
+
+<script>
+    var parentElem = document.getElementById('paper1').parentNode;
+    //var parentWidth = window.innerWidth-50;
+    //var parentHeight = window.innerHeight-50;
+    var parentWidth = parentElem.offsetWidth - 40;
+    var parentHeight = parentElem.offsetHeight - 20;
+
+    var paper = Raphael("paper1", parentWidth, parentHeight);
+    //var rect1 = paper.rect(20,30,100,12).attr({fill: "orange"});
+    data = {{ one_segment_effort | safe }}
+
+    // get segment polyline which is the last element  
+    pathCoordinates = data.pop()
+
+    //remove last entrie if distance is smaller than 70m
+    if (data.length > 1 && data[data.length - 1][0] - data[data.length - 2][0] < 70) {
+        data.pop()
+    }
+
+    function convertHMS(value) {
+                                    const sec = parseInt(value, 10); // convert value to number if it's string
+                                    let hours   = Math.floor(sec / 3600); // get hours
+                                    let minutes = Math.floor((sec - (hours * 3600)) / 60); // get minutes
+                                    let seconds = sec - (hours * 3600) - (minutes * 60); //  get seconds
+                                    // add 0 if value < 10; Example: 2 => 02
+                                    if (hours   < 10) {hours   = "0"+hours;}
+                                    if (minutes < 10) {minutes = "0"+minutes;}
+                                    if (seconds < 10) {seconds = "0"+seconds;}
+                                    if (hours == "00") {
+                                        return minutes+'\''+seconds+'\'\''; // Return is MM : SS
+                                    } else {
+                                        return hours+'h'+minutes+'\''+seconds+'\'\''; // Return is HH : MM : SS
+                                  }
+    } 
+
+    function extractPolyline(path, latlongd,latlongf) {
+        deb=0
+        for (var i=0; i<path.length; i++) {
+            deb=i
+            if (path[i][0] == latlongd[0] && path[i][1] == latlongd[1]) {
+                break
+            }
+        }
+        fin=deb
+        for (var i=deb; i<path.length; i++) {
+            fin=i
+            if (path[i][0] == latlongf[0] && path[i][1] == latlongf[1]) {
+                break
+            }
+        }
+        return path.slice(deb,fin+1) 
+    }
+
+    mapDiv = document.getElementById("map");
+    // Initialize the map
+    var map = L.map(mapDiv);
+    L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        { attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>' }
+    ).addTo(map);
+
+
+    var polyline = L.polyline(pathCoordinates, {
+        // color: 'red',
+        weight: 5,
+        opacity: 0.5
+    });
+
+    // Add the polyline to the map
+    polyline.addTo(map);
+    map.fitBounds(polyline.getBounds());
+
+
+    segment_info = {{ segment_info | safe }}
+    console.log("Pat Add se", data)
+    console.log("Pat Add segment_info=", segment_info)
+    //var data=[[0,1012,0],[300,1036,8.4],[609,1057,7.12],[924,1088,10]]
+    //var data=[[0, 263, 0],[467, 318, 11.0],[935, 365, 10],[1405, 418, 11.3]]
+    firstalt = data[0][1]
+    lastalt = data[(data.length - 1)][1]
+    ydiff = Math.abs(data[data.length - 1][1] - firstalt)
+    xdiff = Math.abs(data[data.length - 1][0])
+    xscale = (parentWidth - 20) / xdiff
+    offset = 40
+    yscale = (parentHeight - offset - 60) / ydiff
+    bottom = parentHeight - offset
+    console.log("Pat Add data[last]=", data[data.length - 1])
+
+    point = data[0]
+
+    temps = 0
+    data.forEach(x => {
+        temps += x[3];
+    });
+
+    timexscale = (parentWidth - 20) / temps
+
+    // fill the whole paper in gray 
+    rect = paper.rect(0, 0, 10000, 10000, 0).attr({ fill: "lightgray" });
+
+    // display segment information
+    if (segment_info.length != 0) {
+
+        longueur = "Longueur: " + (segment_info[1] / 1000).toFixed(1) + " km\n"
+        denivele = "Dénivelé: " + segment_info[2].toFixed(1) + "m\n"
+        pourcentage = "Pourcentage: " + segment_info[3] + "%\n"
+        elapsed = "Temps: " + convertHMS(temps) + "\n"
+        Vitasc = "Vitesse Ascensionnelle: " + ((segment_info[2] / temps) * 3600).toFixed(0) + "m/h\n"
+        Vitdesc = "Vitesse descente: -" + ((segment_info[2] / temps) * 3600).toFixed(0) + "m/h\n"
+        if (segment_info[3] < 0) {
+            paper.text(parentWidth / 2, 60, "Ascension: " + segment_info[0] + "\n" +
+                longueur +
+                denivele +
+                elapsed +
+                Vitdesc +
+                pourcentage).attr({ 'text-anchor': 'start', "font-size": "14px", "font-weight": "400", fill: "white" })
+        } else {
+            paper.text(10, 60, "Ascension: " + segment_info[0] + "\n" +
+                longueur +
+                denivele +
+                elapsed +
+                Vitasc +
+                pourcentage).attr({ 'text-anchor': 'start', "font-size": "14px", "font-weight": "400", fill: "white" })
+        }
+    }
+
+
+    if (segment_info[3] < 0) {
+        tcurve = "M" + (point[0] * xscale).toString() + "," + (bottom - (Math.abs((point[1]) - lastalt)) * yscale).toString() + "R"
+
+    } else {
+        tcurve = "M" + (point[0] * xscale).toString() + "," + bottom + "R"
+    }
+
+    xt = 0
+    for (var i = 1; i < data.length; i++) {
+        nextpoint = data[i]
+        grade = Math.abs(nextpoint[2])
+        if (segment_info[3] < 0) {
+            dpath = "M" + (point[0] * xscale).toString() + "," + bottom
+            dpath = dpath + "L" + (point[0] * xscale).toString() + "," + (bottom - (point[1] - lastalt) * yscale).toString()
+            dpath = dpath + "L" + (nextpoint[0] * xscale).toString() + "," + (bottom - ((nextpoint[1] - lastalt) * yscale)).toString()
+            dpath = dpath + "L" + (nextpoint[0] * xscale).toString() + "," + bottom + "Z"
+        } else {
+            dpath = "M" + (point[0] * xscale).toString() + "," + bottom
+            dpath = dpath + "L" + (point[0] * xscale).toString() + "," + (bottom - ((point[1] - firstalt) * yscale).toString())
+            dpath = dpath + "L" + (nextpoint[0] * xscale).toString() + "," + (bottom - (nextpoint[1] - firstalt) * yscale).toString()
+            dpath = dpath + "L" + (nextpoint[0] * xscale).toString() + "," + bottom + "Z"
+        }
+        if (segment_info[3] < 0) {
+            if (grade < 3) {
+                color = "lavender"
+            } else if (grade < 4) {
+                color = "cyan"
+            } else if (grade < 5) {
+                color = "lightskyblue"
+            } else if (grade < 6) {
+                color = "skyblue"
+            } else if (grade < 7) {
+                color = "DeepSkyBlue"
+            } else if (grade < 8) {
+                color = "DodgerBlue"
+            } else if (grade < 9) {
+                color = "CornflowerBlue"
+            } else if (grade < 10) {
+                color = "Blue"
+            } else if (grade < 12) {
+                color = "DarkSlateBlue"
+            } else {
+                color = "DarkBlue"
+            }
+        } else {
+            if (grade < 3) {
+                color = "YellowGreen"
+            } else if (grade < 4) {
+                color = "wheat"
+            } else if (grade < 5) {
+                color = "gold"
+            } else if (grade < 6) {
+                color = "orange"
+            } else if (grade < 7) {
+                color = "darkorange"
+            } else if (grade < 8) {
+                color = "OrangeRed"
+            } else if (grade < 9) {
+                color = "red"
+            } else if (grade < 10) {
+                color = "crimson"
+            } else if (grade < 12) {
+                color = "darkred"
+            } else {
+                color = "black"
+            }
+        }
+        console.log("Pat Add color", dpath, nextpoint[2], color)
+        paper.path(dpath).attr({ fill: color })
+
+        // compute  alt/t curve
+        xt += nextpoint[3]
+        if (segment_info[3] < 0) {
+            tcurve += (xt * timexscale).toString() + " " + (bottom - Math.abs(((nextpoint[1] - lastalt) * yscale)).toString()) + " "
+        } else {
+            tcurve += (xt * timexscale).toString() + " " + (bottom - ((nextpoint[1] - firstalt) * yscale).toString()) + " "
+        }
+        //add legend and info 
+        //paper.text(point[0]*xscale+(nextpoint[0]*xscale-point[0]*xscale)/2,bottom-30,nextpoint[2].toFixed(1)+"%" ).attr({"font-size": "14px", "font-weight": "400", fill: "white"}).transform("R-90");;
+        //paper.text(nextpoint[0]*xscale,parentHeight-15,(nextpoint[0]/1000).toFixed(1)+"km").attr({"font-size": "14px", "font-weight": "400", fill: "black"}).transform("R-30");   
+        
+        spath=extractPolyline(pathCoordinates,[point[5],point[6]],[nextpoint[5],nextpoint[6]])
+        var polylinetemp = L.polyline(spath, {
+            color: color,
+            weight: 5,
+            opacity: 1
+         });
+
+    // Add the polyline to the map
+        polylinetemp.addTo(map);
+        console.log("Pat Add extarcted path ", spath, [point[5],point[6]],[nextpoint[5],nextpoint[6]])
+        point = nextpoint
+
+    }
+
+    paper.path(tcurve).attr({ "stroke": "cyan", "stroke-width": '3' })
+
+
+    point = data[0]
+    var circleOptions = {
+        color: 'black',
+        fillColor: 'black',
+        fillOpacity: 100
+    }
+    var circle = L.circle([point[5], point[6]], 5, circleOptions);
+    circle.addTo(map);
+
+    if (segment_info[3] < 0) {
+        for (var i = 1; i < data.length; i++) {
+            nextpoint = data[i]
+            //add legend and info 
+            paper.text(point[0] * xscale + (nextpoint[0] * xscale - point[0] * xscale) / 2, bottom - 30, nextpoint[4].toFixed(1) + "m/h").attr({ "font-size": "14px", "font-weight": "400", fill: "white" }).transform("R-30");
+            paper.text(point[0] * xscale + (nextpoint[0] * xscale - point[0] * xscale) / 2, (bottom - Math.abs(((point[1] - lastalt) * yscale))).toString(), nextpoint[2].toFixed(1) + "%").attr({ "font-size": "14px", "font-weight": "400", fill: "white" });
+            paper.text(nextpoint[0] * xscale, parentHeight - 15, (nextpoint[0] / 1000).toFixed(1) + "km").attr({ "font-size": "14px", "font-weight": "400", fill: "black", 'font-weight': 'bold' }).transform("R-30");
+            point = nextpoint
+
+            var circle = L.circle([point[5], point[6]], 1, circleOptions);
+            circle.addTo(map);
+            // circleCenter.push([point[5],point[6]]) 
+        }
+    } else {
+        for (var i = 1; i < data.length; i++) {
+            nextpoint = data[i]
+            //add legend and info 
+            paper.text(point[0] * xscale + (nextpoint[0] * xscale - point[0] * xscale) / 2, bottom - 30, nextpoint[4].toFixed(1) + "m/h").attr({ "font-size": "14px", "font-weight": "400", fill: "white" }).transform("R-30");
+            paper.text(point[0] * xscale + (nextpoint[0] * xscale - point[0] * xscale) / 2, (bottom - ((point[1] - firstalt) * yscale) - 55).toString(), nextpoint[2].toFixed(1) + "%").attr({ "font-size": "14px", "font-weight": "400", fill: "white" });
+            paper.text(nextpoint[0] * xscale, parentHeight - 15, (nextpoint[0] / 1000).toFixed(1) + "km").attr({ "font-size": "14px", "font-weight": "400", fill: "black", 'font-weight': 'bold' }).transform("R-30");
+            point = nextpoint
+            var circle = L.circle([point[5], point[6]], 1, circleOptions);
+            circle.addTo(map);
+            //circleCenter.push([point[5],point[6]]) 
+        }
+    }
+
+</script>
+
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+
+{% endblock javascripts %}

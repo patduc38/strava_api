@@ -1,26 +1,134 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} work in progress {% endblock %} 
+{% block title %} work in progress {% endblock %}
 
 <!-- Specific Page CSS goes HERE  -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+<link rel='stylesheet' href='static/assets/css/bootstrap.css'>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+{% endblock stylesheets %}
 
 {% block content %}
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!--link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"-->
-    <link href="https://getbootstrap.com/docs/5.2/assets/css/docs.css" rel="stylesheet">
-    <title>Bootstrap Example</title>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-  </head>
-  <body class="p-3 m-0 border-0 bd-example">
+<head>
+
+  <style>
+    tr.collapse.in {
+      display: table-row;
+    }
     
- 
-<center></cebte><img src="https://cdn.pixabay.com/photo/2012/04/01/18/55/work-in-progress-24027_1280.png" width="102" height="84"></center>
+    .expandable-row:not(.collapsed) {
+        color: white;
+        background-color: DeepSkyBlue;
+    }
+
+    .hiddenRow {
+      padding: 0 !important;
+    }
+  </style>
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js'></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/static/assets//Leaflet.encoded/Polyline.encoded.js"></script>
+
+</head>
+
+<script>
+  function convertHMS(value) {
+                                    const sec = parseInt(value, 10); // convert value to number if it's string
+                                    let hours   = Math.floor(sec / 3600); // get hours
+                                    let minutes = Math.floor((sec - (hours * 3600)) / 60); // get minutes
+                                    let seconds = sec - (hours * 3600) - (minutes * 60); //  get seconds
+                                    // add 0 if value < 10; Example: 2 => 02
+                                    if (hours   < 10) {hours   = "0"+hours;}
+                                    if (minutes < 10) {minutes = "0"+minutes;}
+                                    if (seconds < 10) {seconds = "0"+seconds;}
+                                    if (hours == "00") {
+                                        return minutes+'\''+seconds+'\'\''; // Return is MM : SS
+                                    } else {
+                                        return hours+'h'+minutes+'\''+seconds+'\'\''; // Return is HH : MM : SS
+                                    }
+  }
+
+  segments = []
+
+  function createTableRows(segments) {
+    let accordionHTML = `<div style="overflow-y: auto, height:100px"> <table  class="table table-condensed table-striped" >
+    <thead>
+        <tr>
+          <th>name</th>
+          <th>distance</th>
+          <th>time</th>
+          <th>pourcentage</th>
+        </tr>
+    </thead>
+    <tbody style="">   
+`;
+    if (segments == "quota exceeded") {
+      return "<div><b>La limite de requêtes a l'API strava a été atteinte</b></div>"
+    }
+    segments.forEach((item, index) => {
+    accordionHTML += `
+          <!--tr data-bs-toggle="collapse" data-bs-target="#demop${index}" class="accordion-toggle expandable-row"-->
+          <!--tr data-toggle="collapse" data-target="#demop${index}" class="accordion-toggle expandable-row pat_table" style="background-color: #FFFFFF;"-->  
+          <tr style="background-color: #FFFFFF;">  
+            <td ><a href=segment_effort?seid=${item[2]}>${item[1]}</a></td>
+            <td> ${(item[3]/1000).toFixed(1)}km </td>
+            <td> ${convertHMS(item[4])}</td>
+            <td> ${item[5]}% </td>
+          </tr>
+          `;
+    });
+    accordionHTML += `</tbody>
+</table></div>
+`
+    return accordionHTML
+  }
+
+
+  function loadsegments(activity) {
+    $.ajax({
+      url: 'listsegments.html?activity=' + activity,
+      dataType: 'application/json',
+      complete: function (data) {
+        segments = data.responseText;
+        segments = JSON.parse(segments);
+        accordionHTML = createTableRows(segments);
+        table = document.getElementById('tablerow');
+        table.innerHTML = accordionHTML;
+      },
+    })
+
+  }
+
+</script>
+
+
+<body>
+
+
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      Segments
+    </div>
+    <div class="panel-body">
+      <div id="tablerow" style="height:450px; overflow-y: auto; "></div>
+    </div>
+  </div>
+
+  <script>
+    var url = new URL(window.location.href);
+        //if (url.searchParams.has('starred')) {
+    activity=url.searchParams.get("activity")
+    loadsegments(activity)
+  </script>
+</body>
+
 {% endblock content %}
 
 <!-- Specific Page JS goes HERE  -->

@@ -44,8 +44,8 @@
                         sid={{ sid | safe}}
                         distance={{ distance | safe}}
                         elevation={{ elevation | safe}}
+                        polyline='{{ polyline | safe}}'
                         name="{{name}}"
-
                         if (name != "") {
                             var color = values.map(x => 'rgba(75,192,192,0.4)'); 
                             
@@ -62,7 +62,9 @@
                             kvalues=[]
                             klabels=[]
 
-           
+                        
+                        nbasc=window.parent.document.getElementById("hidden-polyline")
+                        nbasc.innerHTML = polyline
 
                         for (var i=0; i<values.length; i++) {
                             d=Date.parse(labels[i])
@@ -150,7 +152,7 @@
                         },
                         options: {
                             legend: {
-                                display: false //This will do the task
+                                display: false
                             },
                             responsive: true,
                             scales: {

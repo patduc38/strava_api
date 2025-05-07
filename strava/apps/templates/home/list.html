@@ -72,7 +72,7 @@
     }
 
 
-    function navigate(url, name, sid)
+    function navigate(url, name, sid,sname)
                     {
                         var iframe = window.parent.document.getElementsByName( "graphframe" )[0];
                         iframe.src = url;
@@ -80,18 +80,30 @@
                         sn.innerText=name
                         sn = window.parent.document.getElementById("nom-segment");
                         sn.innerText=name
-                        sn = window.parent.document.getElementById("strava-link");
-                         
+                        sn = window.parent.document.getElementById("strava-link"); 
                  
                         // Create the text node for anchor element.
                         var link = window.parent.document.createTextNode("(strava segment)");                        
                         // Append the text node to anchor element.
-                        sn.innerHTML="<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20px\" height=\"20px\" aria-label=\"Strava\" role=\"img\" viewBox=\"0 0 512 512\"><rect width=\"512\" height=\"512\" rx=\"15%\" fill=\"#fc4c01\"/><path fill=\"#ffffff\" d=\"M120 288L232 56l112 232h-72l-40-96-40 96z\"/><path fill=\"#fda580\" d=\"M280 288l32 72 32-72h48l-80 168-80-168z\"/></svg> <span style=\"font-size: small;\"> (segment Strava) </span>";                                                 
+                        sn.innerHTML="<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20px\" height=\"20px\" aria-label=\"Strava\" role=\"img\" viewBox=\"0 0 512 512\"><rect width=\"512\" height=\"512\" rx=\"15%\" fill=\"#fc4c01\"/><path fill=\"#ffffff\" d=\"M120 288L232 56l112 232h-72l-40-96-40 96z\"/><path fill=\"#fda580\" d=\"M280 288l32 72 32-72h48l-80 168-80-168z\"/></svg> <span style=\"font-size: small;\"> Segment Strava </span>";                       
                         // Set the title.
                         sn.title = "strava segment"; 
                         sn.target="_blank"
                         // Set the href property.
-                        sn.href = "https://www.strava.com/segments/" +sid;         
+                        sn.href = "https://www.strava.com/segments/" +sid;  
+
+                        sn = window.parent.document.getElementById("stat-link"); 
+                 
+                        // Create the text node for anchor element.
+                        //var link = window.parent.document.createTextNode(" Strava segment");                        
+                        // Append the text node to anchor element.
+                        //sn.innerHTML="<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20px\" height=\"20px\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fill=\"#000000\" version=\"1.1\" id=\"Layer_1\" viewBox=\"0 0 32 32\" xml:space=\"preserve\"><path id=\"box--plot_1_\" d=\"M31,31.36H1c-0.199,0-0.36-0.161-0.36-0.36V1h0.72v29.64H31V31.36z M14,27.36H6v-0.72h3.64v-3.28H6  c-0.199,0-0.36-0.161-0.36-0.36V11c0-0.199,0.161-0.36,0.36-0.36h3.64V7.36H6V6.64h8v0.72h-3.64v3.28H14  c0.199,0,0.36,0.161,0.36,0.36v12c0,0.199-0.161,0.36-0.36,0.36h-3.64v3.279H14V27.36z M6.36,22.64h7.28v-5.28H6.36V22.64z   M6.36,16.64h7.28v-5.28H6.36V16.64z M28,23.36h-8v-0.72h3.64v-3.28H20c-0.199,0-0.36-0.161-0.36-0.36V7  c0-0.199,0.161-0.36,0.36-0.36h3.64V3.36H20V2.64h8v0.72h-3.64v3.28H28c0.199,0,0.36,0.161,0.36,0.36v12  c0,0.199-0.161,0.36-0.36,0.36h-3.64v3.279H28V23.36z M20.36,18.64h7.279v-5.28H20.36V18.64z M20.36,12.64h7.279V7.36H20.36V12.64z\"/><rect id=\"_Transparent_Rectangle\" style=\"fill:none;\" width=\"32\" height=\"32\"/></svg> <span> stats </span>";
+                        sn.innerHTML="<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20px\" height=\"20px\"  xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 256 256\" enable-background=\"new 0 0 256 256\" xml:space=\"preserve\"> <metadata> Svg Vector Icons : http://www.onlinewebfonts.com/icon </metadata> <g> <path fill=\"#4b5f6e\" d=\"M42.3,234.7c-3.6,0-6.5-2.9-6.5-6.5V21.3c0-3.6,2.9-6.5,6.5-6.5s6.5,2.9,6.5,6.5v206.9 C48.8,231.8,45.9,234.7,42.3,234.7z\"/> <path fill=\"#f6b85d\" d=\"M59.8,83.7H24.9c-1.1,0-1.9,0.9-1.9,1.9v77.6c0,1.4,1.2,2.6,2.6,2.6h33.6c1.4,0,2.6-1.2,2.6-2.6V85.6 C61.7,84.6,60.9,83.7,59.8,83.7z\"/> <path fill=\"#4b5f6e\" d=\"M68.2,70.8H16.5c-3.6,0-6.5,2.9-6.5,6.5v95c0,3.6,2.9,6.5,6.5,6.5h51.7c3.6,0,6.5-2.9,6.5-6.5v-95 C74.7,73.7,71.7,70.8,68.2,70.8z M61.7,163.2c0,1.4-1.2,2.6-2.6,2.6H25.5c-1.4,0-2.6-1.2-2.6-2.6V85.6c0-1.1,0.9-1.9,1.9-1.9h34.9 c1.1,0,1.9,0.9,1.9,1.9V163.2z\"/> <path fill=\"#4b5f6e\" d=\"M128,254.1c-3.6,0-6.5-2.9-6.5-6.5V40.7c0-3.6,2.9-6.5,6.5-6.5c3.6,0,6.5,2.9,6.5,6.5v206.9 C134.5,251.2,131.6,254.1,128,254.1z\"/> <path fill=\"#f6b85d\" d=\"M145.5,103.1h-34.9c-1.1,0-1.9,0.9-1.9,1.9v77.6c0,1.4,1.2,2.6,2.6,2.6h33.6c1.4,0,2.6-1.2,2.6-2.6V105 C147.4,104,146.5,103.1,145.5,103.1z\"/> <path fill=\"#4b5f6e\" d=\"M153.9,90.2h-51.7c-3.6,0-6.5,2.9-6.5,6.5v95c0,3.6,2.9,6.5,6.5,6.5h51.7c3.6,0,6.5-2.9,6.5-6.5v-95 C160.3,93.1,157.4,90.2,153.9,90.2z M147.4,182.6c0,1.4-1.2,2.6-2.6,2.6h-33.6c-1.4,0-2.6-1.2-2.6-2.6V105c0-1.1,0.9-1.9,1.9-1.9 h34.9c1.1,0,1.9,0.9,1.9,1.9V182.6z\"/> <path fill=\"#4b5f6e\" d=\"M213.7,221.8c-3.6,0-6.5-2.9-6.5-6.5V8.4c0-3.6,2.9-6.5,6.5-6.5c3.6,0,6.5,2.9,6.5,6.5v206.9 C220.1,218.8,217.2,221.8,213.7,221.8z\"/> <path fill=\"#f6b85d\" d=\"M231.1,70.8h-34.9c-1.1,0-1.9,0.9-1.9,1.9v77.6c0,1.4,1.2,2.6,2.6,2.6h33.6c1.4,0,2.6-1.2,2.6-2.6V72.7 C233.1,71.7,232.2,70.8,231.1,70.8z\"/> <path fill=\"#4b5f6e\" d=\"M239.5,57.8h-51.7c-3.6,0-6.5,2.9-6.5,6.5v95c0,3.6,2.9,6.5,6.5,6.5h51.7c3.6,0,6.5-2.9,6.5-6.5v-95 C246,60.8,243.1,57.8,239.5,57.8z M233.1,150.3c0,1.4-1.2,2.6-2.6,2.6h-33.6c-1.4,0-2.6-1.2-2.6-2.6V72.7c0-1.1,0.9-1.9,1.9-1.9 h34.9c1.1,0,1.9,0.9,1.9,1.9V150.3z\"/></g> </svg> <span style=\"font-size: small;\"> Segment stats </span>";
+                        // Set the title.
+                        sn.title = "segment stats"; 
+                        //sn.target="#"
+                        // Set the href property.
+                        sn.href = "try.html?sid=" +sid+"&sname="+sname;             
                     }
 
 
@@ -113,7 +125,7 @@
                         var newCell = newRow.insertCell();
                         var newText = document.createTextNode(name);
                         a.appendChild(newText)
-                        a.href='javascript:navigate("/graph?sid=' + ids[i] + '&name='+ qname+'","'+name+ '","'+ids[i]+'"); updateShortcutParent()'
+                        a.href='javascript:navigate("/graph?sid=' + ids[i] + '&name='+ qname+'","'+name+ '","'+ids[i]+ '","'+name+'"); updateShortcutParent()'
                         newCell.appendChild(a);
                         newCell = newRow.insertCell();     
                         newCell.innerHTML='<input type="checkbox" class="star" id="starred_'+i+'" name="starred">';

@@ -147,6 +147,12 @@
                 stat_filtered.push(metric[i])
             }
         }
+        
+        lastActivitiesDay=0
+        if (activities_labels_filtered.length >0) {
+            lastActivitiesDay=moment(activities_labels_filtered[activities_labels_filtered.length-1]).dayOfYear();
+        }
+
 
         last = 1
         for (i = 0; i < activities_labels_filtered.length; i++) {
@@ -171,20 +177,28 @@
             cumdist.push(cumdist[i - 1] + stats_dist[i])
         }
 
-        console.log("Pat Add cumdist")
-
         days = []
         j = 0
         var i
-        for (i = 0; i < getNbDays(year); i++) {
+        exit=false
+        for (i = 0; i < getNbDays(year) && i <= lastActivitiesDay ; i++) {
             j++
             m = moment(year + "-" + j, "YYYY-MM")
             t = m.daysInMonth()
             days.push(m.format('DD MMM'))
             for (k = 2; k <= t; k++) {
-                days.push("")
                 i = i + 1
+                if (i+1 == lastActivitiesDay) {
+                    m=moment(activities_labels_filtered[activities_labels_filtered.length-1])
+                    days.push(m.format('DD MMM'))
+                    exit=true
+	    	    break
+	        }
+                days.push("")
             }
+           if (exit) {
+               break
+           }
         }
 
         var myObject = new Object();
@@ -245,7 +259,8 @@
                 label: year[j],
                 borderColor: color[year[j] - 2017],
                 pointRadius: 0,
-                fill: false
+                fill: false,
+                lineTension: 0
             })
 
         }
@@ -256,10 +271,6 @@
         }
         lineChart = new Chart(ctx, {
             type: 'line',
-            plugins: [
-                // This chart will use the plugin
-                ChartRegressions
-            ],
             data: {
                 labels: val[0].days,
                 datasets:   dslist,

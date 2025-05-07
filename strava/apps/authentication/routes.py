@@ -61,6 +61,7 @@ def remove():
 
 @blueprint.route('/login', methods=['GET', 'POST'])
 def login():
+    print("Pat Add IN LOGIN")
     login_form = LoginForm(request.form)
     if 'login' in request.form:
         # read form data

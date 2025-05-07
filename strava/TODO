@@ -1,0 +1,4 @@
+- ajouter donnees dans table mysql pour chaque segment detail
+- prendre les donnees de la table sql quand elles existent pour segment detail (sinon recalculer et stocker dans mysql) 
+- afficher map (graphe?)  de l'ascension selectionnee dans Ascensions (en partant des donneees du segment) 
+- traiter directement un fichier gpx map (graphe?)  de l'ascension selectionnee dans Ascensions (en partant des donneees du segment) 

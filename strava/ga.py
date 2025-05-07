@@ -326,6 +326,248 @@ def addActivity(id,access_token=''):
     con.close()
     return r
 
+def getActivitySegments(activity,access_token=''):
+    if access_token=='' :
+        with open('strava_tokens.json') as json_file:
+            strava_tokens = json.load(json_file)
+        access_token = strava_tokens['access_token']
+    
+    url = "https://www.strava.com/api/v3/activities/"+str(activity)
+    url=url + '?access_token=' + access_token
+    r = requests.get(url)
+    r = r.json() 
+
+    if  isinstance(r, dict)  :
+        print("Pat Add in getActivitySegment=0")
+        if ('message' in r):
+            print("Pat Add in getActivitySegment=1")
+            if (r['message'] == 'Rate Limit Exceeded' ) :
+                return("quota exceeded")             
+            if r['message'] == 'Authorization Error':
+                return("refresh token expected")
+    row=[]          
+    for s in r['segment_efforts']:
+        seid = str(s['id'])
+        sid = str(s['segment']['id'])
+        name = s['name']
+        distance = str(s['segment']['distance'])
+        athlete_id = str(s['athlete']['id'])
+        moving_time = str(s['moving_time'])
+        elapsed_time = str(s['elapsed_time'])
+        starred = str(s['segment']['starred'])
+        private=str(s['segment']['private'])
+        average_grade = str(s['segment']['average_grade'])
+        try:
+            elevation = str(round(s['segment']['elevation_high']-s['segment']['elevation_low']))
+        except TypeError:
+            elevation=""
+
+        if elevation != "" and abs(s['segment']['average_grade'])>4 and s['segment']['distance']>1000:
+            row.append([sid,name,seid,distance,moving_time,average_grade])
+    
+    return(row)
+           
+def getActivityStreams(activity_ID,access_token=''):
+    if access_token=='' :
+        with open('strava_tokens.json') as json_file:
+            strava_tokens = json.load(json_file)
+        access_token = strava_tokens['access_token']
+
+    url = "https://www.strava.com/api/v3/activities/"+activity_ID+"/streams?keys=distance&key_by_type=true"
+    url = "https://www.strava.com/api/v3/segment_efforts/3251152918477905464/streams?keys=time,altitude,distance&key_by_type=true"
+    
+    r = requests.get(url + '&access_token=' + access_token)
+    r = r.json()
+    print("Pat Add r=",r," url=",url)
+
+def getActivitySegmentEfforts(activity_id,access_token=''):
+    if access_token=='' :
+        with open('strava_tokens.json') as json_file:
+            strava_tokens = json.load(json_file)
+        access_token = strava_tokens['access_token']
+    
+    url = "https://www.strava.com/api/v3/activities/"+str(activity_id)
+    url=url + '?access_token=' + access_token
+    r = requests.get(url)
+    r = r.json() 
+    print ("Pat Add debug", r)
+    if  isinstance(r, dict)  :
+        if ('message' in r) :
+            if r['message'] == 'Rate Limit Exceeded' :
+                return("quota exceeded")
+            if r['message'] == 'Authorization Error':
+                return("refresh token expected")
+    se=[]          
+    for s in r['segment_efforts']:
+        seid = str(s['id'])
+        avg_rate =  s['segment']['average_grade']
+        dist =  s['segment']['distance']
+        print ("Pat Add debug seid", seid, s['segment']['name'], avg_rate, dist)
+        if avg_rate * dist > 7000 :
+            se.append([seid,  s['segment']['name'], avg_rate, dist, s['segment']['elevation_high']-s['segment']['elevation_low']])
+    print ("Pat Add debug", se)
+    return se
+
+def getSegmentEffortStreams(se_id, access_token=''):
+    if access_token=='' :
+        with open('strava_tokens.json') as json_file:
+            strava_tokens = json.load(json_file)
+        access_token = strava_tokens['access_token']
+    url = "https://www.strava.com/api/v3/segment_efforts/"+str(se_id)+"/streams?keys=time,altitude,latlng&key_by_type=true&resolution=low"
+    r = requests.get(url + '&access_token=' + access_token)
+    r = r.json()
+    print("Pat Add getSegmentEffortStreams",r)
+    return r
+
+def getSegmentEffortInfo(sid):   
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor()
+
+    try:
+        st="SELECT segment_name,segment_distance,elevation,average_rate,start_date_local FROM segment_efforts WHERE ID = '" + str(sid) + "' ;"
+        cur.execute(st)
+        rows = cur.fetchall()
+        con.close()
+        print("Pat Add======>", rows,st)
+        if len(rows) > 0 :
+            a=[]
+            for i in rows[0]:
+                a.append(i)
+            return a 
+    except KeyError as e :
+         print("key error encountered or e=",e)
+    return []
+
+def getSegmentStats(sid,aid,Month="",Year=""):
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor()
+    final=[]
+    try:
+        if Month == "":
+            if Year == "" :
+                current_year=current_year = datetime.now().year
+                for y in range(current_year,current_year-8,-1):
+                    st=f'select moving_time from segment_efforts where athlete_ID={aid} and segment_ID={sid} and STRFTIME("%Y", start_date_local)="{y}";'
+                    print("Pat Add st=",st)
+                    cur.execute(st)
+                    rows = cur.fetchall()
+                    a=[]
+                    if len(rows) > 0 :
+                        for row in rows:
+                            a.append(row[0]) 
+                    final.append(a)
+                final.reverse()
+                print("Pat Add final=",final)    
+        # else:
+        #     for i in  range(Month):
+        #             if i<10:
+        #                 m=f'0{i}'
+        #             else:
+        #                 m=i
+        #             if Year == "" :
+        #                 st=f'select moving_time from segment_efforts where athlete_ID={aid} and segment_ID={sid} and STRFTIME("%m", start_date_local)="{m}";'
+        #                 print("Pat Add st=",st)
+        #                 cur.execute(st)
+        #                 rows = cur.fetchall()
+        #                 print("Pat Add res=",res, "rows=",a)
+        #             else :
+        #                 st=f'select moving_time from segment_efforts where athlete_ID={aid} and segment_ID={sid} and STRFTIME("%m-%Y", start_date_local)="{m}-{Year}";'
+        #                 print("Pat Add st=",st)
+        #                 cur.execute(st)
+        #                 rows = cur.fetchall()
+                             
+        #             if len(rows) > 0 :
+        #                 a=[]
+        #                 for row in rows:
+        #                     a.append(row[0])
+        #             res.append(a) 
+        #             print("Pat Add res=",res, "rows=",a)          
+                    
+    except KeyError as e :
+        print("key error encountered or e=",e)        
+    #print("Pat Add res=",res,len(res))    
+    return final
+
+def buildDataFromSegmentEffortStreams(r):
+      distances=r['distance']['data']
+      times=r['time']['data']
+      altitudes=r['altitude']['data']
+      latlong=r['latlng']['data']
+      cumuld=0
+      cumuldd=0
+      cumula=0
+      cumulaa=0
+      cumult=0
+      cumultt=0
+      prevelev=altitudes[0]
+      result=[[0,altitudes[0],0,0,0,latlong[0][0],latlong[0][1]]]
+      pointsList=[]
+      pointsList.append([latlong[0][0],latlong[0][1]])
+      if 0:
+          url="https://api.elevationapi.com/api/Elevation?lat="+str(latlong[0][0])+"&lon="+str(latlong[0][1])+"&dataSet=IGN_1m"
+          print("https://api.elevationapi.com/api/Elevation?lat="+str(latlong[0][0])+"&lon="+str(latlong[0][1])+"&dataSet=IGN_1m")
+          r = requests.get(url,verify=False)
+          r = r.json()
+          prevelev=r['geoPoints'][0]['elevation']
+      else:
+          url="https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json?lon="+str(latlong[0][1])+"&lat="+str(latlong[0][0])+"&resource=ign_rge_alti_wld&delimiter=|&zonly=true"
+          print("https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json?lon="+str(latlong[0][1])+"&lat="+str(latlong[0][0])+"&resource=ign_rge_alti_wld&delimiter=|&zonly=true")
+          r = requests.get(url)
+          r = r.json()
+          prevelev=r['elevations'][0]
+    
+      print("Pat Add time=========",times)
+
+      for i,d in enumerate(distances):              
+             if i+1 < len(distances): 
+                   pointsList.append([latlong[i+1][0],latlong[i+1][1]])
+                   dx=distances[i+1]-d
+                   ax=altitudes[i+1]-altitudes[i]
+                   tx=times[i+1]-times[i]
+                   #print("Pat add ax=",ax)
+                   cumuld=cumuld+dx
+                   cumuldd=cumuldd+dx
+                   cumula=cumula+ax
+                   cumulaa=cumulaa+ax
+                   cumult=cumult+tx
+                   cumultt=cumultt+tx
+                   if cumuld>200 or i==(len(distances)-2):
+                        if 0 : 
+                            print("i=",i,"  =>   d=",cumuld," a=",cumula, " pct=", (cumula*100)/cumuld, "va=",(cumula/cumult)*3600)
+                            url="https://api.elevationapi.com/api/Elevation?lat="+str(latlong[i+1][0])+"&lon="+str(latlong[i+1][1])+"&dataSet=IGN_1m"
+                            print("https://api.elevationapi.com/api/Elevation?lat="+str(latlong[i+1][0])+"&lon="+str(latlong[i+1][1])+"&dataSet=IGN_1m")
+                            r = requests.get(url,verify=False)
+                            print("Pat Add",r)
+                            r = r.json()
+                            elev=r['geoPoints'][0]['elevation']
+                            print("Pat Add",r,elev)
+                        else: 
+                            url="https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json?lon="+str(latlong[i+1][1])+"&lat="+str(latlong[i+1][0])+"&resource=ign_rge_alti_wld&zonly=true"
+                            r = requests.get(url)
+                            if r.status_code != 200:
+                                url="https://api.elevationapi.com/api/Elevation?lat="+str(latlong[i+1][0])+"&lon="+str(latlong[i+1][1])+"&dataSet=IGN_1m"
+                                r = requests.get(url,verify=False)
+                                print("Pat Add",r)
+                                if r.status_code != 200: 
+                                    return 
+                                r = r.json()
+                                elev=r['geoPoints'][0]['elevation']
+                            else:     
+                                r = r.json()
+                                elev=r['elevations'][0]
+                        diffelev=elev-prevelev
+                        prevelev=elev
+                        pct=(diffelev/cumuld)*100
+                        print("Pat Add pct=",pct)
+                        point=[cumuldd,elev,pct,cumult,(cumula/cumult)*3600,latlong[i+1][0],latlong[i+1][1]]
+                        result.append(point)
+
+                        cumuld=0
+                        cumula=0
+                        cumult=0
+      print("Pat cumulaa=",cumulaa,"cumuldd=",cumuldd,"cumultt=",cumultt,result)
+      result.append(pointsList)
+      return result
 
 # add segment_efforts from an activity into segment_efforts table 
 def gse(id,r=None,access_token='',):
@@ -391,7 +633,9 @@ def gse(id,r=None,access_token='',):
 def retrieve_segment_efforts(sid,uid):
     con = sqlite3.connect('strava.db')
     cur = con.cursor() 
-    st="SELECT elapsed_time,start_date_local,elevation,segment_distance,average_rate FROM segment_efforts WHERE segment_ID =  '" + str(sid) + "' AND athlete_ID='"+str(uid)+"' ORDER by start_date_local ;"
+       #SELECT elapsed_time,start_date_local,elevation,segment_distance,average_rate,polyline FROM segment_efforts INNER JOIN segment_info on segment_efforts.segment_ID = segment_info.segment_ID WHERE segment_efforts.segment_ID = 4815216;
+
+    st="SELECT elapsed_time,start_date_local,elevation,segment_distance,average_rate,polyline FROM segment_efforts LEFT JOIN segment_info on segment_efforts.segment_ID = segment_info.segment_ID WHERE segment_efforts.segment_ID =  '" + str(sid) + "' AND athlete_ID='"+str(uid)+"' ORDER by start_date_local ;"
     cur.execute(st)
     rows = cur.fetchall()
     con.close()
@@ -456,12 +700,12 @@ def get_ascensions(pct,uid,starred=False):
     else :
         starstring = " "
     #st="SELECT segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID where average_rate >= "+str(pct)+" AND type='Ride' AND starred=1 AND athlete_ID='"+str(uid)+"';"     
-    st="SELECT segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID INNER JOIN segment_athlete ON segment_efforts.segment_ID=segment_athlete.segment_ID AND segment_efforts.athlete_ID=segment_athlete.athlete_ID  where average_rate >= "+str(pct)+ starstring+ " AND type='Ride' AND segment_efforts.athlete_ID='"+str(uid)+"';"     
+    st="SELECT segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local,segment_efforts.segment_name,segments.starred,activity_ID from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID INNER JOIN segment_athlete ON segment_efforts.segment_ID=segment_athlete.segment_ID AND segment_efforts.athlete_ID=segment_athlete.athlete_ID  where average_rate >= "+str(pct)+ starstring+ " AND type='Ride' AND segment_distance >= 3000 AND segment_efforts.athlete_ID='"+str(uid)+"';"     
     cur.execute(st)
     rows = cur.fetchall()
     if len(rows) == 0:
       starstring = " "
-      st="SELECT segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID INNER JOIN segment_athlete ON segment_efforts.segment_ID=segment_athlete.segment_ID AND segment_efforts.athlete_ID=segment_athlete.athlete_ID  where average_rate >= "+str(pct)+ starstring+ " AND type='Ride' AND segment_efforts.athlete_ID='"+str(uid)+"';"     
+      st="SELECT segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local,segment_efforts.segment_name,segments.starred,activity_ID from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID INNER JOIN segment_athlete ON segment_efforts.segment_ID=segment_athlete.segment_ID AND segment_efforts.athlete_ID=segment_athlete.athlete_ID  where average_rate >= "+str(pct)+ starstring+ " AND type='Ride' AND segment_distance >= 3000 AND segment_efforts.athlete_ID='"+str(uid)+"';"     
       cur.execute(st)
       rows = cur.fetchall()
       
@@ -502,7 +746,7 @@ def get_longest_activity_ascension(cur,aid, length,pct,uid,starred=False,nbraw=1
         cur.execute(st)
         rows = cur.fetchall()
         if len(rows) == 0:
-            st="SELECT segment_efforts.segment_name,segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID INNER JOIN segment_athlete ON segment_efforts.segment_ID=segment_athlete.segment_ID AND segment_efforts.athlete_ID=segment_athlete.athlete_ID  where average_rate >= "+str(pct) + "AND segment_efforts.activity_ID = '"+ str(aid)+"' ORDER by segment_distance DESC LIMIT "+str(nbraw)+";"     
+            st="SELECT segment_efforts.segment_name,segment_distance,segment_efforts.moving_time,segment_efforts.elevation,segment_efforts.start_date_local from segment_efforts INNER JOIN segments ON segment_efforts.segment_ID=segments.ID INNER JOIN activities ON segment_efforts.activity_ID=activities.ID INNER JOIN segment_athlete ON segment_efforts.segment_ID=segment_athlete.segment_ID AND segment_efforts.athlete_ID=segment_athlete.athlete_ID  where average_rate >= "+str(pct) + " AND segment_efforts.activity_ID = '"+ str(aid)+"' ORDER by segment_distance DESC LIMIT "+str(nbraw)+";"     
             cur.execute(st)
             rows = cur.fetchall()
     if len(rows) != 0 :
@@ -516,44 +760,33 @@ def get_last_3_ascensions_2(length,pct,uid,starred=False):
     
     #get last 3 acttivities 
     rows=get_last_3_activities(uid)
-    if len(rows) > 0 :
-        row1=str(rows[0][9])
-        if len(rows) == 1:
-            row2=str(rows[0][9])
-            row3=str(rows[0][9])
-        if  len(rows) == 2:
-            row2=str(rows[1][9])
-            row3=str(rows[0][9])
-        if  len(rows) >= 3:
-            row2=str(rows[1][9])
-            row3=str(rows[2][9])
-    else : 
-        return []
-    
     return_rows=[]
     nbrow=1
-    newraw=get_longest_activity_ascension(cur,str(rows[0][9]), length,pct,uid,starred,nbrow)
+    newraw=get_longest_activity_ascension(cur,str(rows[0][1]), length,pct,uid,starred,nbrow)
+
     if newraw != None:
         return_rows.append(newraw)
     else :
-        nbrow=nbrow+1
+        return_rows.append([rows[0][0],None,None,None,rows[0][11]])
     
-    newraw=get_longest_activity_ascension(cur,str(rows[1][9]), length,pct,uid,starred,nbrow)
+    #return  ('Domene - le mont', None, None, None, '2024-04-26T17:54:46Z')] 
+    newraw=get_longest_activity_ascension(cur,str(rows[1][1]), length,pct,uid,starred,nbrow)
     if newraw != None:
         return_rows.append(newraw)
-        nbrow=1
     else :
-        nbrow=nbrow+1    
+        return_rows.append([rows[1][0],None,None,None,rows[1][11]])    
     
-    newraw=get_longest_activity_ascension(cur,str(rows[2][9]), length,pct,uid,starred,nbrow)
+    newraw=get_longest_activity_ascension(cur,str(rows[2][1]), length,pct,uid,starred,nbrow)
     if newraw != None:
         return_rows.append(newraw)
+    else :
+        return_rows.append([rows[2][0],None,None,None,rows[2][11]])
     con.close()
     print(return_rows)
     return(return_rows)
 
 # get all activities for user uid
-def get_activities(uid,limit=None,offset=None):
+def get_ride_activities(uid,limit=None,offset=None):
     
     limitstring=""
     if limit != None :
@@ -569,6 +802,17 @@ def get_activities(uid,limit=None,offset=None):
     con.close()
     return(rows)
 
+# get all activities for user uid. 
+def get_all_activities(uid):
+    con = sqlite3.connect('strava.db')
+    cur = con.cursor() 
+    st="SELECT name,ID,distance,moving_time,elevation,average_speed,max_speed,average_cadence,average_temp,gear_name,gear_distance,start_date_local,summary_polyline from  activities where athlete ='"+str(uid)+"' ORDER by start_date_local ASC;"    
+    cur.execute(st)
+    rows = cur.fetchall()
+    con.close()
+    return(rows)
+
+
 # get all activities for user uid and strava type. 
 # type syntax is 'Type in ("Walk","Run")
 def get_activities_by_type(uid,type):
@@ -580,21 +824,32 @@ def get_activities_by_type(uid,type):
     con.close()
     return(rows)
 
-# get all activities for user uid
+# get all activities for user uid and strava type. 
+# type syntax is 'Type in ("Walk","Run")
+def get_activities_repartition(uid):
+    bike=len(get_activities_by_type(uid,"type='Ride'"))
+    walk=len(get_activities_by_type(uid,"type='Walk'"))
+    run=len(get_activities_by_type(uid,"type='Run'"))
+    hike=len(get_activities_by_type(uid,"type='Hike'"))
+    total=len(get_all_activities(uid))
+    other=total-(bike+walk+run+hike)
+    return([bike,run,walk,hike,other])
+
+# get last 3 activities for user uid
 def get_last_3_activities(uid):
     con = sqlite3.connect('strava.db')
     cur = con.cursor() 
-    st="SELECT name,distance,moving_time,elevation,average_speed,start_date_local,average_cadence,average_temp,summary_polyline,ID from  activities where type = 'Ride' and sport_type='Ride'and distance>5000 and elevation > 10 and average_speed>1.66 and athlete ='"+str(uid)+"' ORDER by start_date_local DESC limit 3;"    
+    st="SELECT name,ID,distance,moving_time,elevation,average_speed,max_speed,average_cadence,average_temp,gear_name,gear_distance,start_date_local,summary_polyline from  activities where type = 'Ride' and sport_type='Ride'and distance>5000 and elevation > 10 and average_speed>1.66 and athlete ='"+str(uid)+"' ORDER by start_date_local DESC limit 3;"    
     cur.execute(st)
     rows = cur.fetchall()
     con.close()
     return(rows)
 
-# get all activities for user uid
+# get all activities inthe provided interval for user uid
 def get_activities_in_interval(uid,begin_date,end_date):
     con = sqlite3.connect('strava.db')
     cur = con.cursor() 
-    st="SELECT name,distance,moving_time,elevation,average_speed,start_date_local,average_cadence,average_temp from  activities where type = 'Ride' and sport_type='Ride'and distance>5000 and elevation > 10 and average_speed>1.66 and athlete ='"+str(uid)+"' AND start_date_local>date('"+str(begin_date)+"') and start_date_local<date('"+str(end_date)+"');"    
+    st="SELECT name,ID,distance,moving_time,elevation,average_speed,max_speed,average_cadence,average_temp,gear_name,gear_distance,start_date_local,summary_polyline from  activities where type = 'Ride' and sport_type='Ride'and distance>5000 and elevation > 10 and average_speed>1.66 and athlete ='"+str(uid)+"' AND start_date_local>date('"+str(begin_date)+"') and start_date_local<date('"+str(end_date)+"');"    
     cur.execute(st)
     rows = cur.fetchall()
     con.close()

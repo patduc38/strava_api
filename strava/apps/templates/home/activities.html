@@ -53,6 +53,7 @@
           <th style="font-size: 0.6rem;">Distance</th>
           <th style="font-size: 0.6rem;">Temps</th>
           <th style="font-size: 0.6rem;">Dénivelé</th>
+          <th style="font-size: 0.6rem;">Segments</th>
         </tr>
     </thead>
     <tbody style="">   
@@ -76,6 +77,7 @@
             <td >${(item[2] / 1000).toFixed(2)} km</td>
             <td >${h}h${m}m${t}s</td>
             <td >${item[4]} m</td>
+            <td> <a href="segments.html?activity=${item[1]}"><img src="/static/assets/img/velo_ascensions.jpg"  width="20" height="20"></a> </td>
           </tr>
           <tr>
               <td colspan="5" class="hiddenRow">
@@ -136,7 +138,7 @@
     }
     currentPage = pageNumber
     $.ajax({
-      url: 'dashtry.html?limit=' + rpp + '&offset=' + (pageNumber - 1) * rpp,
+      url: 'listactivities.html?limit=' + rpp + '&offset=' + (pageNumber - 1) * rpp,
       dataType: 'application/json',
       complete: function (data) {
         activities = data.responseText;

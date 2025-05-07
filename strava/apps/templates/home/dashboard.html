@@ -34,6 +34,11 @@
         border-color: #1F2937;
     }
 
+    .leaflet-tile-pane {
+ -webkit-filter: grayscale(100%);
+ filter: grayscale(100%);
+}
+
 </style>
 {% endblock stylesheets %}
 
@@ -43,11 +48,13 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="/static/assets//Leaflet.encoded/Polyline.encoded.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+
 
 <script>
     window.onload = function () {
         var url = new URL(window.location.href);
-        console.log("pat new url is  ", url.toString())
         //if (url.searchParams.has('starred')) {
         if (url.searchParams.get("starred") == "true") {
             document.getElementById("starred").checked = true; // Check the checkbox
@@ -66,7 +73,6 @@
 
     function updateEndMin() {
         updateShortcut()
-        console.debug("Pat add patochon")
 
         var debd = document.getElementById('start')
         if (debd.value == '') {
@@ -92,8 +98,6 @@
     }
 
     function updateStartMax() {
-        console.debug("Pat add patochon2")
-
         updateShortcut()
         var endd = document.getElementById('end')
         if (endd.value == '') {
@@ -117,6 +121,12 @@
         document.getElementById('start').max = endd
     }
 
+    activities_type = {{ activities_type | safe }} 
+    wactivities = {{ wactivities | safe }}
+   /* wactivities.forEach(function(subArray) {
+    // Remove the 2 element 
+    subArray.splice(1, 1);
+    });*/
     last3activities = {{ last3activities | safe }}
     last3ascensions = {{ last3ascensions | safe }}
     weekactivities = {{ weekactivities | safe }}
@@ -125,6 +135,15 @@
     monthbeforeactivities = {{ monthbeforeactivities | safe }}
     yearactivities = {{ yearactivities | safe }}
     yearbeforeactivities = {{ yearbeforeactivities | safe }}
+
+
+    ascensions_distance = {{ ascensions_distance | safe }}
+    ascensions_name = {{ ascensions_name | safe }}
+    ascensions_moving_time = {{ ascensions_moving_time | safe }}
+    ascensions_elevation = {{ ascensions_elevation | safe }}
+    ascensions_labels = {{ ascensions_labels | safe }}
+    ascensions_starred = {{ ascensions_starred | safe }}
+    ascensions_activities_id = {{ ascensions_activities_id | safe }}
 
     function updateTrend(type) {
         if (type == "week") {
@@ -142,8 +161,8 @@
         }
 
         // Distance
-        distance = activities.reduce(function (a, b) { return a + b[1]; }, 0);
-        distancebefore = activitiesbefore.reduce(function (a, b) { return a + b[1]; }, 0);
+        distance = activities.reduce(function (a, b) { return a + b[2]; }, 0);
+        distancebefore = activitiesbefore.reduce(function (a, b) { return a + b[2]; }, 0);
         dist = (distance / 1000).toFixed(2) + " km"
         sign = "+"
         if (distance - distancebefore > 0) {
@@ -154,14 +173,14 @@
             color = "red"
             sign = ""
         }
-        document.getElementById("periode_d").innerHTML ="<span style='font-size: small;'>"+ dist + "</span><br><span style='font-size: x-small;'>(&Delta;=" + sign + ((distance - distancebefore) / 1000).toFixed(0) + " km)</span>"
+        document.getElementById("periode_d").innerHTML = "<span style='font-size: small;'>" + dist + "</span><br><span style='font-size: x-small;'>(&Delta;=" + sign + ((distance - distancebefore) / 1000).toFixed(0) + " km)</span>"
         chevron = document.getElementById("periode_d_e")
         chevron.innerHTML = content
         chevron.style.color = color
 
         //time
-        time = activities.reduce(function (a, b) { return a + b[2]; }, 0);
-        timebefore = activitiesbefore.reduce(function (a, b) { return a + b[2]; }, 0);
+        time = activities.reduce(function (a, b) { return a + b[3]; }, 0);
+        timebefore = activitiesbefore.reduce(function (a, b) { return a + b[3]; }, 0);
         t = time
         h = Math.floor(t / 3600)
         t = t % 3600
@@ -182,14 +201,14 @@
             color = "red"
             sign = ""
         }
-        document.getElementById("periode_t").innerHTML = "<span style='font-size: small;'>"+distime + "</span><br><span style='font-size: x-small;'>(&Delta;=" + sign + diff + ")</span>"
+        document.getElementById("periode_t").innerHTML = "<span style='font-size: small;'>" + distime + "</span><br><span style='font-size: x-small;'>(&Delta;=" + sign + diff + ")</span>"
         chevron = document.getElementById("periode_t_e")
         chevron.innerHTML = content
         chevron.style.color = color
 
         //Denivele 
-        denivweek = activities.reduce(function (a, b) { return a + b[3]; }, 0);
-        denivweekbefore = activitiesbefore.reduce(function (a, b) { return a + b[3]; }, 0);
+        denivweek = activities.reduce(function (a, b) { return a + b[4]; }, 0);
+        denivweekbefore = activitiesbefore.reduce(function (a, b) { return a + b[4]; }, 0);
         sign = "+"
         if (denivweek - denivweekbefore >= 0) {
             content = "&#x25B2;"
@@ -199,7 +218,7 @@
             color = "red"
             sign = ""
         }
-        document.getElementById("periode_dn").innerHTML ="<span style='font-size: small;'>"+ denivweek.toFixed(0) + " m" + "</span><br><span style='font-size: x-small;'>(&Delta;=" + sign + (denivweek - denivweekbefore).toFixed(0) + " m)</span>"
+        document.getElementById("periode_dn").innerHTML = "<span style='font-size: small;'>" + denivweek.toFixed(0) + " m" + "</span><br><span style='font-size: x-small;'>(&Delta;=" + sign + (denivweek - denivweekbefore).toFixed(0) + " m)</span>"
 
         chevron = document.getElementById("periode_dn_e")
         chevron.innerHTML = content
@@ -215,35 +234,188 @@
             color = "red"
             sign = ""
         }
-        document.getElementById("periode_s").innerHTML = "<span style='font-size: small;'>"+activities.length + "</span><br><span style='font-size: x-small;'>(&Delta;=" + sign + (activities.length - activitiesbefore.length) + ")</span>"
+        document.getElementById("periode_s").innerHTML = "<span style='font-size: small;'>" + activities.length + "</span><br><span style='font-size: x-small;'>(&Delta;=" + sign + (activities.length - activitiesbefore.length) + ")</span>"
         chevron = document.getElementById("periode_s_e")
         chevron.innerHTML = content
         chevron.style.color = color
     }
 
+    function updateHighlights(type) {
+        if (type == "week") {
+            dactivities = weekactivities
+        } else if (type == "month") {
+           dactivities = monthactivities
+        } else if (type == "year") {
+            dactivities = yearactivities
+        } else if (type == "ever") {
+            dactivities = wactivities
+        } else {
+            dactivities = wactivities
+        }        
+    }
+
+    function filterAscensions(type) {
+        switch (type) {
+            case "week":
+                var e = new Date();
+                var b = new Date();
+                b.setDate(e.getDate() - 7);
+                for (i=0; i<ascensions_labels.length;i++) {
+                    var d = Date.parse(ascensions_labels[i])
+                    if (d >= b && d <= e) {
+                        asc_distance.push(ascensions_distance[i])
+                        asc_activities_id.push(ascensions_activities_id[i])
+                        asc_name.push(ascensions_name[i])
+                        asc_moving_time.push(ascensions_moving_time[i])
+                        asc_elevation.push(ascensions_elevation[i])
+                        asc_labels.push(ascensions_labels[i])
+                        asc_starred.push(ascensions_starred[i])                        
+                    }
+                }
+                break;
+                case "month":
+                var e = new Date();
+                var b = new Date();
+                b.setMonth(e.getMonth() - 1);
+                for (i=0; i<ascensions_labels.length;i++) {
+                    var d = Date.parse(ascensions_labels[i])
+                    if (d >= b && d <= e) {
+                        asc_distance.push(ascensions_distance[i])
+                        asc_activities_id.push(ascensions_activities_id[i])
+                        asc_name.push(ascensions_name[i])
+                        asc_moving_time.push(ascensions_moving_time[i])
+                        asc_elevation.push(ascensions_elevation[i])
+                        asc_labels.push(ascensions_labels[i])
+                        asc_starred.push(ascensions_starred[i])                        
+                    }
+                }
+                break;
+            default:
+                asc_distance = ascensions_distance
+                asc_activities_id = ascensions_activities_id
+                asc_name = ascensions_name
+                asc_labels=ascensions_labels
+                asc_elevation = ascensions_elevation
+                asc_moving_time = ascensions_moving_time
+                asc_starred=ascensions_starred
+        }
+    }
+
+    function updateHighlights_s(type) {
+        asc_distance = []
+        asc_activities_id = []
+        asc_name = []
+        asc_labels=[]
+        asc_elevation = []
+        asc_moving_time = []
+        asc_starred=[]
+        filterAscensions(type) 
+        displayMaxAscensions(asc_distance, asc_elevation, asc_labels, asc_moving_time, asc_name,asc_activities_id)      
+    }
+
+    function getMaxFromActivities(activities, ind) {
+        max = activities[0][ind]
+        rank = 0
+        for (i = 1; i < activities.length; i++) {
+            if (activities[i][ind] > max) {
+                max = activities[i][ind]
+                rank = i
+            }
+        }
+        return rank
+    }
+
+    function getMaxFromAscensions(ascensions) {
+        max = ascensions[0]
+        rank = 0
+        for (i = 1; i < ascensions.length; i++) {
+            if (ascensions[i] > max) {
+                max = ascensions[i]
+                rank = i
+            }
+        }
+        return rank
+    }
+
+    function displayMaxActivity(activities, ind) {
+        longmax = getMaxFromActivities(activities, ind)
+        date = new Date(activities[longmax][11])
+        date = date.toLocaleString('fr-FR', {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+        });
+        inner = "<span><b><a href=http://www.strava.com/activities/"+activities[longmax][1]+" target=_blank style=\"color: orange\">" + activities[longmax][0] + "</a></b></span>: "
+        inner += "<span>" + date + "</span> <BR>"
+        inner += "<span>" + (activities[longmax][2] / 1000).toFixed(2) + "km</span> . "
+        inner += "<span>" + (activities[longmax][4]).toFixed(0) + "m</span> . "
+        t = activities[longmax][3]
+        h = Math.floor(t / 3600)
+        t = t % 3600
+        m = Math.floor(t / 60)
+        t = t % 60
+        inner += h + "h" + m + "'" + t + "'' . "
+        inner += "<span>" + (activities[longmax][5]*3.6).toFixed(2) + "km/h</span>"
+        document.getElementById("longest_a").innerHTML =  inner
+    }
+
+    function displayMaxAscensions(ascensions_distance, ascensions_elevation, ascensions_labels, ascensions_moving_time, ascensions_name, ascensions_activities_id) {
+        longmax = getMaxFromAscensions(ascensions_elevation)
+        date = new Date(ascensions_labels[longmax])
+        date = date.toLocaleString('fr-FR', {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+        });
+        inner = "<span><b><a href=http://www.strava.com/activities/"+ascensions_activities_id[longmax]+" target=_blank style=\"color: orange\">" + ascensions_name[longmax] + "</a></b></span>: "
+        inner += "<span>" + date + "</span> <BR>"
+        inner += "<span>" + (ascensions_distance[longmax] / 1000).toFixed(2) + "km</span> . "
+        inner += "<span>" + (ascensions_elevation[longmax]).toFixed(0) + "m</span> . "
+        t = ascensions_moving_time[longmax]
+        h = Math.floor(t / 3600)
+        t = t % 3600
+        m = Math.floor(t / 60)
+        t = t % 60
+        inner += h + "h" + m + "'" + t + "'' . "
+        document.getElementById("longest_asc").innerHTML =  inner
+    }
+
+
+</script>
+<button class="btn btn-outline-primary btn-sm" style="font-size: smaller; margin-bottom: 5pt;"
+onclick="$('#filter').toggle(); enable=document.getElementById('show_filter'); if (enable.innerText=='filtre &or;') {enable.innerText='filtre &and;'} else {enable.innerText='filtre &or;'}">
+    <span id="show_filter"> filtre &or; </span>
+</button>
+<span id="period" style="font-size: small;"></span>           
+<div id="filter" style="display: none; font-size:smaller">
+    <label for="start">début:</label>
+    <input type="date" id="start" name="start" value="" min="2017-01-01" max=""
+        onBlur="updateEndMin(); updateShortcut()">
+    <label for="end" style="margin: 0px 0px 0px 20px;">fin: </label>
+    <input type="date" id="end" name="end" value="" min="2017-01-01"
+        onblur="updateStartMax(); updateShortcut()">
+    <button type="submit" id="button" onclick="updateDashboardInfo()">filtrer...</button>
+    <div class="small mt-2" id="year_shortcut"></div>.
+</div>
+
+<script>
+    endd = new Date().toLocaleDateString('en-CA')
+    filter_period=document.getElementById("period")
+    filter_period.innerHTML=" &nbsp;&nbsp;&nbsp; -> "+endd
 </script>
 
+
 <div class="col-12 col-xl-12">
-    <div class="d-block ms-auto">
-        <label for="start">Start date:</label>
-        <input type="date" id="start" name="start" value="" min="2017-01-01" max=""
-            onBlur="updateEndMin();        updateShortcut()">
-        <label for="end" style="margin: 0px 0px 0px 20px;">End date: </label>
-        <input type="date" id="end" name="end" value="" min="2017-01-01" onblur="updateStartMax();  updateShortcut()">
-        <button type="submit" id="button" onclick="updateDashboardInfo()">filter</button>
-        <div class="small mt-2" id="year_shortcut"></div>
-
-    </div>
-
     <div class="row" style="--bs-gutter-x: 0.6rem;">
         <div class="col-12 col-xl-4">
-
+            
             <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
                 <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
-                    <div class="d-block">
+                    <div class="d-block">                        
                         <div>
-                            <span class="h6 text-black-400 mb-0" id="nom-segment">Stat. générales</span>
-                        </div>
+                            <span class="h6 text-black-400 mb-0" id="nom-segment">Stat. générales &nbsp;&nbsp;</span>
+                        </div>                        
+
                     </div>
                 </div>
                 <div class="card-body p-2" style="font-size: 14px;">
@@ -283,145 +455,7 @@
                 <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
                     <div class="d-block">
                         <div>
-                            <span class="h6 text-black-400 mb-0" id="nom-segment" data-bs-toggle="tooltip"
-                                data-bs-placement="top"
-                                title="ascensions d'au moins 1km et supérieures à 3%"><span
-                                    style="font-size: large;font-weight: light;color:darkcyan ">&#128712;</span> 3
-                                dernières ascensions</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body p-2" style='font-size: 14px'>
-                    <div class="accordion" id="accordionAscension">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingOneAsc">
-                                <button class="accordion-button collapsed" id="asc_button_1" type="button"
-                                    data-bs-toggle="collapse" data-bs-target="#collapseOneAsc" aria-expanded="false"
-                                    aria-controls="collapseOneAsc" style="font-size: 14px;">
-                                    <script>
-                                        document.getElementById("asc_button_1").innerHTML = last3ascensions[0][0]                                    
-                                    </script>
-                                </button>
-                            </h2>
-                            <div id="collapseOneAsc" class="accordion-collapse collapse" aria-labelledby="headingOneAsc"
-                                data-bs-parent="#accordionAscension">
-                                <div class="accordion-body" id="asc_content_1">
-                                    <script>
-                                        date = new Date(last3ascensions[0][4])
-                                        date = date.toLocaleString('fr-FR', {
-                                            weekday: 'long',
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric',
-                                            hour: 'numeric',
-                                            minute: 'numeric'
-                                        });
-
-                                        content = "<span class='text-black-600 fw-bolder'>" + date + '</span><br>'
-                                        content = content + "distance: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[0][1] / 1000).toFixed(2) + "km </span><br>"
-                                        content = content + "denivelé: <span class='text-gray-400 fw-bolder'>" + last3ascensions[0][3] + "m  (% " + (last3ascensions[0][3] / last3ascensions[0][1] * 100).toFixed(2) + ") </span><br>"
-                                        t = last3ascensions[0][2]
-                                        h = Math.floor(t / 3600)
-                                        t = t % 3600
-                                        m = Math.floor(t / 60)
-                                        t = t % 60
-                                        content = content + "temps: <span class='text-gray-400 fw-bolder'>" + h + "h" + m + "'" + t + "''  (vit. asc.: " + (last3ascensions[0][3] / last3ascensions[0][2] * 3600).toFixed(0) + "m/h)</span><br>"
-                                        content = content + "vit. moy.: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[0][1] / last3ascensions[0][2] * 3.6).toFixed(2) + "km/h </span><br>"
-                                        divelement = document.getElementById("asc_content_1")
-                                        divelement.innerHTML = content
-                                        //divelement.style.color="#ced4da"                          
-                                    </script>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingTwoAsc">
-                                <button class="accordion-button collapsed" id="asc_button_2" type="button"
-                                    data-bs-toggle="collapse" data-bs-target="#collapseTwoAsc" aria-expanded="false"
-                                    aria-controls="collapseTwoAsc" style="font-size: 14px;">
-                                    <script>
-                                        document.getElementById("asc_button_2").innerHTML = last3ascensions[1][0]                                   
-                                    </script>
-                                </button>
-                            </h2>
-                            <div id="collapseTwoAsc" class="accordion-collapse collapse" aria-labelledby="headingTwoAsc"
-                                data-bs-parent="#accordionAscension">
-                                <div class="accordion-body" id="asc_content_2">
-                                    <script>
-                                        date = new Date(last3ascensions[1][4])
-                                        date = date.toLocaleString('fr-FR', {
-                                            weekday: 'long',
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric',
-                                            hour: 'numeric',
-                                            minute: 'numeric'
-                                        });
-
-                                        content = "<span class='text-black-600 fw-bolder'>" + date + '</span><br>'
-                                        content = content + "distance: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[1][1] / 1000).toFixed(2) + "km </span><br>"
-                                        content = content + "denivelé: <span class='text-gray-400 fw-bolder'>" + last3ascensions[1][3] + "m (% " + (last3ascensions[1][3] / last3ascensions[1][1] * 100).toFixed(2) + ")</span><br>"
-                                        t = last3ascensions[1][2]
-                                        h = Math.floor(t / 3600)
-                                        t = t % 3600
-                                        m = Math.floor(t / 60)
-                                        t = t % 60
-                                        content = content + "temps: <span class='text-gray-400 fw-bolder'>" + h + "h" + m + "'" + t + "''  (vit. asc.: " + (last3ascensions[1][3] / last3ascensions[1][2] * 3600).toFixed(0) + "m/h) </span><br>"
-                                        content = content + "vit. moy.: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[1][1] / last3ascensions[1][2] * 3.6).toFixed(2) + "km/h </span><br>"
-                                        document.getElementById("asc_content_2").innerHTML = content                                    
-                                    </script>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingThreeAsc">
-                                <button class="accordion-button collapsed" id="asc_button_3" type="button"
-                                    data-bs-toggle="collapse" data-bs-target="#collapseThreeAsc" aria-expanded="false"
-                                    aria-controls="collapseThreeAsc" style="font-size: 14px;">
-                                    <script>
-                                        document.getElementById("asc_button_3").innerHTML = last3ascensions[2][0]                                    
-                                    </script>
-                                </button>
-                            </h2>
-                            <div id="collapseThreeAsc" class="accordion-collapse collapse"
-                                aria-labelledby="headingThreeAsc" data-bs-parent="#accordionAscension">
-                                <div class="accordion-body" id="asc_content_3">
-                                    <script>
-                                        date = new Date(last3ascensions[2][4])
-                                        date = date.toLocaleString('fr-FR', {
-                                            weekday: 'long',
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric',
-                                            hour: 'numeric',
-                                            minute: 'numeric'
-                                        });
-
-                                        content = "<span class='text-black-600 fw-bolder'>" + date + '</span><br>'
-                                        content = content + "distance: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[2][1] / 1000).toFixed(2) + "km </span><br>"
-                                        content = content + "denivelé: <span class='text-gray-400 fw-bolder'>" + last3ascensions[2][3] + "m (% " + (last3ascensions[2][3] / last3ascensions[2][1] * 100).toFixed(2) + ") </span><br>"
-                                        t = last3ascensions[2][2]
-                                        h = Math.floor(t / 3600)
-                                        t = t % 3600
-                                        m = Math.floor(t / 60)
-                                        t = t % 60
-                                        content = content + "temps: <span class='text-gray-400 fw-bolder'>" + h + "h" + m + "'" + t + "''  (vit. asc.: " + (last3ascensions[2][3] / last3ascensions[2][2] * 3600).toFixed(0) + "m/h) </span><br>"
-                                        content = content + "vit. moy.: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[2][1] / last3ascensions[2][2] * 3.6).toFixed(2) + "km/h </span><br>"
-                                        document.getElementById("asc_content_3").innerHTML = content                                    
-                                    </script>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-xl-4">
-            <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
-                <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
-                    <div class="d-block">
-                        <div>
-                            <span class="h6 text-black-400 mb-0" id="nom-segment">Stat. sorties</span>
+                            <span class="h6 text-black-400 mb-0" id="nom-segment">Stat. activités</span>
                         </div>
                     </div>
                 </div>
@@ -481,205 +515,7 @@
                 </div>
 
             </div>
-            <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
-                <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
-                    <div class="d-block">
-                        <div>
-                            <span class="h6 text-black-400 mb-0" id="nom-segment">3 dernières activités </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body p-2" style='font-size: 14px'>
-                    <div class="accordion" id="accordionActivities">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingOneAct">
-                                <button class="accordion-button collapsed" id="a_button_1" type="button"
-                                    data-bs-toggle="collapse" data-bs-target="#collapseOneAct" aria-expanded="false"
-                                    aria-controls="collapseOneAct" style="font-size: 14px; display: flex; flex-wrap: wrap; white-space: pre;">
-                                    <script>
-                                        date = new Date(last3activities[0][5])
-                                        date = date.toLocaleString('fr-FR', {
-                                            year: 'numeric',
-                                            month: 'numeric',
-                                            day: 'numeric',
-                                        });
-                                        content="<div style='font-size:x-small; '>(<b>"
-                                        content = content + date + '</b> . '
-                                        content = content  + (last3activities[0][1] / 1000).toFixed(2) + "km . "
-                                        content = content + last3activities[0][3] + "m . "
-                                        t = last3activities[0][2]
-                                        h = Math.floor(t / 3600)
-                                        t = t % 3600
-                                        m = Math.floor(t / 60)
-                                        t = t % 60
-                                        content = content + h + "h" + m + "'" + t + "'' . "
-                                        content = content + (last3activities[0][4] * 3.6).toFixed(2) + "km/h"
-                                        content= last3activities[0][0]+"&nbsp;&nbsp;<br/>"+ content+")</div>"
-                                        document.getElementById("a_button_1").innerHTML =  content                                  
-                                    </script>
-                                </button>
-                            </h2>
-                            <div id="collapseOneAct" class="accordion-collapse collapse" aria-labelledby="headingOneAct"
-                                data-bs-parent="#accordionActivities">
-                                <div class="accordion-body" id="a_content_1">
-                                    <div id="map-div" style="width: 100%; height: 200px"></div>
-                                    <script>
-                                        mapDiv = document.getElementById("map-div");
 
-                                        var map = new L.Map(mapDiv);
-                                        L.tileLayer(
-                                            'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                            {
-                                                attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
-                                                maxZoom: 18
-                                            }
-                                        ).addTo(map);
-
-                                        var encoded = last3activities[0][8];
-                                        var polyline = L.Polyline.fromEncoded(encoded);
-                                        console.log("Pat Add dash=||"+encoded+"||")
-
-                                        polyline.addTo(map)
-                                      
-                                        map.fitBounds(polyline.getBounds());
-
-                                        // woraround to correctly disply leaflet tiles in an accordion
-                                        const resizeObserver = new ResizeObserver(() => {
-                                            map.invalidateSize();
-                                            map.fitBounds(polyline.getBounds());
-                                        });
-                                        resizeObserver.observe(mapDiv);
-                                    </script>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingTwoAct">
-                                <button class="accordion-button collapsed" id="a_button_2" type="button"
-                                    data-bs-toggle="collapse" data-bs-target="#collapseTwoAct" aria-expanded="false"
-                                    aria-controls="collapseTwoAct" style="font-size: 14px; display: flex; flex-wrap: wrap;">
-                                    <script>
-                                         date = new Date(last3activities[1][5])
-                                        date = date.toLocaleString('fr-FR', {
-                                            year: 'numeric',
-                                            month: 'numeric',
-                                            day: 'numeric',
-
-                                        });
-                                        content="<div style='font-size:x-small;'>(<b>"
-                                        content = content + date + '</b> . '
-                                        content = content  + (last3activities[1][1] / 1000).toFixed(2) + "km . "
-                                        content = content + last3activities[1][3] + "m . "
-                                        t = last3activities[1][2]
-                                        h = Math.floor(t / 3600)
-                                        t = t % 3600
-                                        m = Math.floor(t / 60)
-                                        t = t % 60
-                                        content = content + h + "h" + m + "'" + t + "'' . "
-                                        content = content + (last3activities[1][4] * 3.6).toFixed(2) + "km/h"
-                                        content=last3activities[1][0]+"&nbsp;&nbsp;<br>"+ content+")</div>"
-                                        document.getElementById("a_button_2").innerHTML =  content 
-                                    </script>
-                                </button>
-                            </h2>
-                            <div id="collapseTwoAct" class="accordion-collapse collapse" aria-labelledby="headingTwoAct"
-                                data-bs-parent="#accordionActivities">
-                                <div class="accordion-body" id="a_content_2">
-                                    <div id="map-div1" style="width: 100% ; height: 200px"></div>
-                                    <script>
-                                        mapDiv1 = document.getElementById("map-div1");
-
-                                        var map1 = new L.Map(mapDiv1);
-                                        L.tileLayer(
-                                            'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                            {
-                                                attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
-                                                maxZoom: 18
-                                            }
-                                        ).addTo(map1);
-
-                                        var encoded1 = last3activities[1][8];
-                                        var polyline1 = L.Polyline.fromEncoded(encoded1).addTo(map1);
-
-                                        var polygon1 = L.Polygon.fromEncoded(encoded1).addTo(map1);
-                                        map1.fitBounds(polyline1.getBounds());
-
-                                        // woraround to correctly disply leaflet tiles in an accordion
-                                         const resizeObserver1 = new ResizeObserver(() => {
-                                            map1.invalidateSize();
-                                            map1.fitBounds(polyline1.getBounds());
-                                        });
-                                        resizeObserver1.observe(mapDiv1);
-                                    </script>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingThreeAct">
-                                <button class="accordion-button collapsed" id="a_button_3" type="button"
-                                    data-bs-toggle="collapse" data-bs-target="#collapseThreeAct" aria-expanded="false"
-                                    aria-controls="collapseThreeAct" style="font-size: 14px; display: flex; flex-wrap: wrap;">
-                                    <script>
-                                        date = new Date(last3activities[2][5])
-                                        date = date.toLocaleString('fr-FR', {
-                                            year: 'numeric',
-                                            month: 'numeric',
-                                            day: 'numeric',
-                                        });
-                                        content="<div style='font-size:x-small;'>(<b>"
-                                        content = content + date + '</b> . '
-                                        content = content  + (last3activities[2][1] / 1000).toFixed(2) + "km . "
-                                        content = content + last3activities[2][3] + "m . "
-                                        t = last3activities[0][2]
-                                        h = Math.floor(t / 3600)
-                                        t = t % 3600
-                                        m = Math.floor(t / 60)
-                                        t = t % 60
-                                        content = content + h + "h" + m + "'" + t + "'' . "
-                                        content = content + (last3activities[2][4] * 3.6).toFixed(2) + "km/h"
-                                        content=last3activities[2][0]+"&nbsp;&nbsp;<br>"+ content+")</div>"
-                                        document.getElementById("a_button_3").innerHTML =  content
-                                    </script>
-                                </button>
-                            </h2>
-                            <div id="collapseThreeAct" class="accordion-collapse collapse"
-                                aria-labelledby="headingThreeAct" data-bs-parent="#accordionActivities">
-                                <div class="accordion-body" id="a_content_3">
-                                    <div id="map-div2" style="width: 100%; height: 200px"></div>
-                                    <script>
-                                        mapDiv2 = document.getElementById("map-div2");
-
-                                        var map2 = new L.Map(mapDiv2);
-                                        L.tileLayer(
-                                            'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                            {
-                                                attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
-                                                maxZoom: 18
-                                            }
-                                        ).addTo(map2);
-
-                                        var encoded2 = last3activities[2][8];
-                                        var polyline2 = L.Polyline.fromEncoded(encoded2).addTo(map2);
-
-                                        var polygon2 = L.Polygon.fromEncoded(encoded2).addTo(map2);
-                                        map2.fitBounds(polyline2.getBounds());
-
-                                        // woraround to correctly disply leaflet tiles in an accordion
-                                        const resizeObserver2 = new ResizeObserver(() => {
-                                            map2.invalidateSize();
-                                            map2.fitBounds(polyline2.getBounds());
-                                        });
-                                        resizeObserver2.observe(mapDiv2);
-
-                                    </script>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-xl-4">
             <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
                 <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
                     <div class="d-block">
@@ -737,6 +573,397 @@
 
                 </div>
             </div>
+
+        </div>
+        <div class="col-12 col-xl-4">
+            <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
+                <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                    <div class="d-block">
+                        <div>
+                            <span class="h6 text-black-400 mb-0" id="nom-segment">3 dernières activités </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-2" style='font-size: 14px'>
+                    <div class="accordion" id="accordionActivities">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOneAct">
+                                <button class="accordion-button collapsed" id="a_button_1" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseOneAct" aria-expanded="false"
+                                    aria-controls="collapseOneAct"
+                                    style="font-size: 14px; display: flex; flex-wrap: wrap; white-space: pre;">
+                                    <script>
+                                        date = new Date(last3activities[0][11])
+                                        date = date.toLocaleString('fr-FR', {
+                                            year: 'numeric',
+                                            month: 'numeric',
+                                            day: 'numeric',
+                                        });
+                                        content = "<div style='font-size:x-small; '>(<b>"
+                                        content = content + date + '</b> . '
+                                        content = content + (last3activities[0][2] / 1000).toFixed(2) + "km . "
+                                        content = content + last3activities[0][4] + "m . "
+                                        t = last3activities[0][3]
+                                        h = Math.floor(t / 3600)
+                                        t = t % 3600
+                                        m = Math.floor(t / 60)
+                                        t = t % 60
+                                        content = content + h + "h" + m + "'" + t + "'' . "
+                                        content = content + (last3activities[0][5] * 3.6).toFixed(2) + "km/h"
+                                        content = "<a href=http://www.google.com target=_blank>"+last3activities[0][0] + "</a> &nbsp;&nbsp;<br/>" + content + ")</div>"
+                                        document.getElementById("a_button_1").innerHTML = content                                  
+                                    </script>
+                                </button>
+                            </h2>
+                            <div id="collapseOneAct" class="accordion-collapse collapse" aria-labelledby="headingOneAct"
+                                data-bs-parent="#accordionActivities">
+                                <div class="accordion-body" id="a_content_1">
+                                    <div id="map-div" style="width: 100%; height: 200px"></div>
+                                    <script>
+                                        mapDiv = document.getElementById("map-div");
+
+                                        var map = new L.Map(mapDiv);
+                                        L.tileLayer(
+                                            'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                            {
+                                                attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+                                                maxZoom: 18
+                                            }
+                                        ).addTo(map);
+
+                                        var encoded = last3activities[0][12];
+                                        var polyline = L.Polyline.fromEncoded(encoded);
+
+                                        polyline.addTo(map)
+
+                                        map.fitBounds(polyline.getBounds());
+
+                                        // woraround to correctly disply leaflet tiles in an accordion
+                                        const resizeObserver = new ResizeObserver(() => {
+                                            map.invalidateSize();
+                                            map.fitBounds(polyline.getBounds());
+                                        });
+                                        resizeObserver.observe(mapDiv);
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwoAct">
+                                <button class="accordion-button collapsed" id="a_button_2" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseTwoAct" aria-expanded="false"
+                                    aria-controls="collapseTwoAct"
+                                    style="font-size: 14px; display: flex; flex-wrap: wrap;">
+                                    <script>
+                                        date = new Date(last3activities[1][11])
+                                        date = date.toLocaleString('fr-FR', {
+                                            year: 'numeric',
+                                            month: 'numeric',
+                                            day: 'numeric',
+
+                                        });
+                                        content = "<div style='font-size:x-small;'>(<b>"
+                                        content = content + date + '</b> . '
+                                        content = content + (last3activities[1][2] / 1000).toFixed(2) + "km . "
+                                        content = content + last3activities[1][4] + "m . "
+                                        t = last3activities[1][3]
+                                        h = Math.floor(t / 3600)
+                                        t = t % 3600
+                                        m = Math.floor(t / 60)
+                                        t = t % 60
+                                        content = content + h + "h" + m + "'" + t + "'' . "
+                                        content = content + (last3activities[1][5] * 3.6).toFixed(2) + "km/h"
+                                        content = last3activities[1][0] + "&nbsp;&nbsp;<br>" + content + ")</div>"
+                                        document.getElementById("a_button_2").innerHTML = content 
+                                    </script>
+                                </button>
+                            </h2>
+                            <div id="collapseTwoAct" class="accordion-collapse collapse" aria-labelledby="headingTwoAct"
+                                data-bs-parent="#accordionActivities">
+                                <div class="accordion-body" id="a_content_2">
+                                    <div id="map-div1" style="width: 100% ; height: 200px"></div>
+                                    <script>
+                                        mapDiv1 = document.getElementById("map-div1");
+
+                                        var map1 = new L.Map(mapDiv1);
+                                        L.tileLayer(
+                                            'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                            {
+                                                attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+                                                maxZoom: 18
+                                            }
+                                        ).addTo(map1);
+
+                                        var encoded1 = last3activities[1][12];
+                                        var polyline1 = L.Polyline.fromEncoded(encoded1).addTo(map1);
+
+                                        var polygon1 = L.Polygon.fromEncoded(encoded1).addTo(map1);
+                                        map1.fitBounds(polyline1.getBounds());
+
+                                        // woraround to correctly disply leaflet tiles in an accordion
+                                        const resizeObserver1 = new ResizeObserver(() => {
+                                            map1.invalidateSize();
+                                            map1.fitBounds(polyline1.getBounds());
+                                        });
+                                        resizeObserver1.observe(mapDiv1);
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingThreeAct">
+                                <button class="accordion-button collapsed" id="a_button_3" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseThreeAct" aria-expanded="false"
+                                    aria-controls="collapseThreeAct"
+                                    style="font-size: 14px; display: flex; flex-wrap: wrap;">
+                                    <script>
+                                        date = new Date(last3activities[2][11])
+                                        date = date.toLocaleString('fr-FR', {
+                                            year: 'numeric',
+                                            month: 'numeric',
+                                            day: 'numeric',
+                                        });
+                                        content = "<div style='font-size:x-small;'>(<b>"
+                                        content = content + date + '</b> . '
+                                        content = content + (last3activities[2][2] / 1000).toFixed(2) + "km . "
+                                        content = content + last3activities[2][4] + "m . "
+                                        t = last3activities[2][3]
+                                        h = Math.floor(t / 3600)
+                                        t = t % 3600
+                                        m = Math.floor(t / 60)
+                                        t = t % 60
+                                        content = content + h + "h" + m + "'" + t + "'' . "
+                                        content = content + (last3activities[2][5] * 3.6).toFixed(2) + "km/h"
+                                        content = last3activities[2][0] + "&nbsp;&nbsp;<br>" + content + ")</div>"
+                                        document.getElementById("a_button_3").innerHTML = content
+                                    </script>
+                                </button>
+                            </h2>
+                            <div id="collapseThreeAct" class="accordion-collapse collapse"
+                                aria-labelledby="headingThreeAct" data-bs-parent="#accordionActivities">
+                                <div class="accordion-body" id="a_content_3">
+                                    <div id="map-div2" style="width: 100%; height: 200px"></div>
+                                    <script>
+                                        mapDiv2 = document.getElementById("map-div2");
+
+                                        var map2 = new L.Map(mapDiv2);
+                                        L.tileLayer(
+                                            'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                            {
+                                                attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+                                                maxZoom: 18
+                                            }
+                                        ).addTo(map2);
+
+                                        var encoded2 = last3activities[2][12];
+                                        var polyline2 = L.Polyline.fromEncoded(encoded2).addTo(map2);
+
+                                        var polygon2 = L.Polygon.fromEncoded(encoded2).addTo(map2);
+                                        map2.fitBounds(polyline2.getBounds());
+
+                                        // woraround to correctly disply leaflet tiles in an accordion
+                                        const resizeObserver2 = new ResizeObserver(() => {
+                                            map2.invalidateSize();
+                                            map2.fitBounds(polyline2.getBounds());
+                                        });
+                                        resizeObserver2.observe(mapDiv2);
+
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
+                <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                    <div class="d-block">
+                        <div>
+                            <span class="h6 text-black-400 mb-0" id="nom-segment" data-bs-toggle="tooltip"
+                                data-bs-placement="top" title="ascensions d'au moins 1km et supérieures à 3%"><span
+                                    style="font-size: large;font-weight: light;color:darkcyan ">&#128712;</span>
+                                3 dernières ascensions</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-2" style='font-size: 14px'>
+                    <div class="accordion" id="accordionAscension">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOneAsc">
+                                <button class="accordion-button collapsed" id="asc_button_1" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseOneAsc" aria-expanded="false"
+                                    aria-controls="collapseOneAsc" style="font-size: 14px;">
+                                    <script>
+                                        document.getElementById("asc_button_1").innerHTML = last3ascensions[0][0]                                    
+                                    </script>
+                                </button>
+                            </h2>
+                            <div id="collapseOneAsc" class="accordion-collapse collapse" aria-labelledby="headingOneAsc"
+                                data-bs-parent="#accordionAscension">
+                                <div class="accordion-body" id="asc_content_1">
+                                    <script>                                        
+                                        date = new Date(last3ascensions[0][4])                                    
+                                        date = date.toLocaleString('fr-FR', {
+                                            year: 'numeric',
+                                            month: 'numeric',
+                                            day: 'numeric',
+                                        });
+                                        content = "<span class='text-black-600 fw-bolder'>" + date + '</span><br>'
+                                        if (last3ascensions[0][1] != null) {
+                                            content = content + "distance: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[0][1] / 1000).toFixed(2) + "km </span><br>"
+                                            content = content + "denivelé: <span class='text-gray-400 fw-bolder'>" + last3ascensions[0][3] + "m  (% " + (last3ascensions[0][3] / last3ascensions[0][1] * 100).toFixed(2) + ") </span><br>"
+                                            t = last3ascensions[0][2]
+                                            h = Math.floor(t / 3600)
+                                            t = t % 3600
+                                            m = Math.floor(t / 60)
+                                            t = t % 60
+                                            content = content + "temps: <span class='text-gray-400 fw-bolder'>" + h + "h" + m + "'" + t + "''  (vit. asc.: " + (last3ascensions[0][3] / last3ascensions[0][2] * 3600).toFixed(0) + "m/h)</span><br>"
+                                            content = content + "vit. moy.: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[0][1] / last3ascensions[0][2] * 3.6).toFixed(2) + "km/h </span><br>"
+                                        } else {
+                                            content+=" (pas d'ascension significative)"
+                                        }
+                                        divelement = document.getElementById("asc_content_1")
+                                        divelement.innerHTML = content
+                                        //divelement.style.color="#ced4da"                          
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwoAsc">
+                                <button class="accordion-button collapsed" id="asc_button_2" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseTwoAsc" aria-expanded="false"
+                                    aria-controls="collapseTwoAsc" style="font-size: 14px;">
+                                    <script>
+                                        document.getElementById("asc_button_2").innerHTML = last3ascensions[1][0]                                   
+                                    </script>
+                                </button>
+                            </h2>
+                            <div id="collapseTwoAsc" class="accordion-collapse collapse" aria-labelledby="headingTwoAsc"
+                                data-bs-parent="#accordionAscension">
+                                <div class="accordion-body" id="asc_content_2">
+                                    <script>
+                                        date = new Date(last3ascensions[1][4])
+                                        date = date.toLocaleString('fr-FR', {
+                                            year: 'numeric',
+                                            month: 'numeric',
+                                            day: 'numeric',
+                                        });
+                                        content = "<span class='text-black-600 fw-bolder'>" + date + '</span><br>'
+                                        if (last3ascensions[1][1] != null) {
+                                            content = content + "distance: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[1][1] / 1000).toFixed(2) + "km </span><br>"
+                                            content = content + "denivelé: <span class='text-gray-400 fw-bolder'>" + last3ascensions[1][3] + "m (% " + (last3ascensions[1][3] / last3ascensions[1][1] * 100).toFixed(2) + ")</span><br>"
+                                            t = last3ascensions[1][2]
+                                            h = Math.floor(t / 3600)
+                                            t = t % 3600
+                                            m = Math.floor(t / 60)
+                                            t = t % 60
+                                            content = content + "temps: <span class='text-gray-400 fw-bolder'>" + h + "h" + m + "'" + t + "''  (vit. asc.: " + (last3ascensions[1][3] / last3ascensions[1][2] * 3600).toFixed(0) + "m/h) </span><br>"
+                                            content = content + "vit. moy.: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[1][1] / last3ascensions[1][2] * 3.6).toFixed(2) + "km/h </span><br>"
+                                        }   else {
+                                            content+=" (pas d'ascension significative)"
+                                        }
+                                        document.getElementById("asc_content_2").innerHTML = content                                    
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingThreeAsc">
+                                <button class="accordion-button collapsed" id="asc_button_3" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#collapseThreeAsc" aria-expanded="false"
+                                    aria-controls="collapseThreeAsc" style="font-size: 14px;">
+                                    <script>
+                                        document.getElementById("asc_button_3").innerHTML = last3ascensions[2][0]                                    
+                                    </script>
+                                </button>
+                            </h2>
+                            <div id="collapseThreeAsc" class="accordion-collapse collapse"
+                                aria-labelledby="headingThreeAsc" data-bs-parent="#accordionAscension">
+                                <div class="accordion-body" id="asc_content_3">
+                                    <script>
+                                        date = new Date(last3ascensions[2][4])
+                                        date = date.toLocaleString('fr-FR', {
+                                            year: 'numeric',
+                                            month: 'numeric',
+                                            day: 'numeric',
+                                        });
+                                        content = "<span class='text-black-600 fw-bolder'>" + date + '</span><br>'
+                                        if (last3ascensions[2][1] != null) {
+                                            content = content + "distance: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[2][1] / 1000).toFixed(2) + "km </span><br>"
+                                            content = content + "denivelé: <span class='text-gray-400 fw-bolder'>" + last3ascensions[2][3] + "m (% " + (last3ascensions[2][3] / last3ascensions[2][1] * 100).toFixed(2) + ") </span><br>"
+                                            t = last3ascensions[2][2]
+                                            h = Math.floor(t / 3600)
+                                            t = t % 3600
+                                            m = Math.floor(t / 60)
+                                            t = t % 60
+                                            content = content + "temps: <span class='text-gray-400 fw-bolder'>" + h + "h" + m + "'" + t + "''  (vit. asc.: " + (last3ascensions[2][3] / last3ascensions[2][2] * 3600).toFixed(0) + "m/h) </span><br>"
+                                            content = content + "vit. moy.: <span class='text-gray-400 fw-bolder'>" + (last3ascensions[2][1] / last3ascensions[2][2] * 3.6).toFixed(2) + "km/h </span><br>"
+                                        } else {
+                                            content+=" (pas d'ascension significative)"
+                                        } 
+                                        document.getElementById("asc_content_3").innerHTML = content                                    
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          
+            <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
+                <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                    <div class="d-block">
+                        <div>
+                            <span class="h6 text-black-400 mb-0" id="nom-segment">
+                                Répartitions des activités
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-2" style='font-size: 14px'>
+                    <div style="height: 200px">
+                            <canvas id="pie-chart"></canvas>
+                    </div>
+
+                    <script>
+                        const data = {
+                            labels: [
+                                'vélo',
+                                'course',
+                                'marche',
+                                'randonnée',
+                                'autres'
+                            ],
+                            datasets: [{
+                                label: 'Repartition des activités',
+                                data: activities_type,
+                                backgroundColor: [
+                                'darkorange',
+                                'chocolate',
+                                'rgb(184, 134, 11)',
+                                'rgb(222, 184, 135)',
+                                'lightgray'
+                                ],
+                                hoverOffset: 4
+                            }]
+                        };
+
+                        const config = {
+                            type: 'doughnut',
+                            data: data,
+                            options: {
+                                maintainAspectRatio: false,
+                            }
+                        };
+
+                        new Chart(document.getElementById("pie-chart"), config)
+                    </script>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-4">
+
             <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
                 <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
                     <div class="d-block">
@@ -779,6 +1006,122 @@
                         updateTrend("week")                       
                     </script>
                 </div>
+            </div>
+            <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
+                <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                    <div class="d-block">
+                        <span class="h6 text-black-400 mb-0" id="nom-segment">Sortie notable &nbsp;&nbsp;&nbsp;</span>
+                    </div>
+                </div>
+                <div class="card-body p-2" style="font-size: 14px;">
+
+                    <div type="font-size:x-small; float: right; position: relative;"></span>
+                        <input type="radio" class="btn-check" name="highlights" id="semaine_h" autocomplete="off"
+                            onclick='updateHighlights("week"); displayMaxActivity(dactivities, dind)'>
+                        <label class="btn btn-outline-primary btn-sm" for="semaine_h">semaine</label>
+                        <input type="radio" class="btn-check" name="highlights" id="mois_h" autocomplete="off"
+                            onclick='updateHighlights("month"); displayMaxActivity(dactivities, dind)'>
+                        <label class="btn btn-outline-primary btn-sm" for="mois_h">mois</label>
+                        <input type="radio" class="btn-check" name="highlights" id="annee_h" autocomplete="off"
+                            onclick='updateHighlights("year"); displayMaxActivity(dactivities, dind)'; checked>
+                        <label class="btn btn-outline-primary btn-sm" for="annee_h">année</label>
+                        <input type="radio" class="btn-check" name="highlights" id="plus_h" autocomplete="off"
+                            onclick='updateHighlights("ever"); displayMaxActivity(dactivities, dind)'>
+                        <label class="btn btn-outline-primary btn-sm" for="plus_h">depuis toujours</label>
+                    </div>
+
+                    <div style="font-size: small; border-bottom: 1px solid lightgray;">
+                        <input class="form-check-input" type="radio" name="type" id="distance" onclick='dind=2; displayMaxActivity(dactivities, dind)' checked>
+                        <label class="form-check-label" for="distance">distance</label>
+                        <input class="form-check-input" type="radio" name="type" id="deniv" onclick='dind=4; displayMaxActivity(dactivities, dind)'>
+                        <label class="form-check-label" for="deniv">dénivelé</label>
+                        <input class="form-check-input" type="radio" name="type" id="temps" onclick='dind=3; displayMaxActivity(dactivities, dind)'>
+                        <label class="form-check-label" for="temps">temps</label>
+                    </div>
+
+                    <div>
+                        <div>
+                            <!--span><b>Plus longue activité</b></span-->
+                            <div id="longest_a" style="font-size:small; margin-top:  0.6rem "></div>
+                        </div>
+                        <script>
+                            period = document.querySelector('input[name=highlights]:checked').id;
+                            type=document.querySelector('input[name=type]:checked').id;
+                            switch (period) {
+                                case "semaine_h":
+                                    act=weekactivities
+                                    break;
+                                case "mois_h":
+                                    act=monthactivities
+                                    break;
+                                case "annee_h":
+                                    act=yearactivities
+                                    break;
+                                default:
+                                    act=wactivities
+                            } 
+                            switch (type) {
+                                case "distance":
+                                    ind=2
+                                    break;
+                                case "deniv":
+                                    ind=4
+                                    break;
+                                case "temps":
+                                    ind=3
+                                    break;
+                                default:
+                                    ind=2
+                            } 
+                            dind=2
+                            dactivities=act
+                            displayMaxActivity(act, ind)                            
+                        </script>
+                    </div>
+                </div>
+            </div>
+            <script>
+                updateTrend("week")
+                updateHighlights("year");
+                dind=2
+            </script>
+            <div class="card border-0 shadow" style="margin-bottom: 0.6rem">
+                <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
+                    <div class="d-block">
+                        <span class="h6 text-black-400 mb-0" id="nom-segment">Ascension notable
+                            &nbsp;&nbsp;&nbsp;</span>
+                    </div>
+                </div>
+                <div class="card-body p-2" style="font-size: 14px;">
+
+                    <div type="font-size:x-small; float: right; position: relative;"></span>
+                        <input type="radio" class="btn-check" name="highlights_s" id="semaine_h_s" autocomplete="off"
+                            onclick=updateHighlights_s("week");>
+                        <label class="btn btn-outline-primary btn-sm" for="semaine_h_s">semaine</label>
+                        <input type="radio" class="btn-check" name="highlights_s" id="mois_h_s" autocomplete="off"
+                            onclick=updateHighlights_s("month");>
+                        <label class="btn btn-outline-primary btn-sm" for="mois_h_s">mois</label>
+                        <input type="radio" class="btn-check" name="highlights_s" id="annee_h_s" autocomplete="off"
+                            onclick=updateHighlights_s("year"); checked>
+                        <label class="btn btn-outline-primary btn-sm" for="annee_h_s">année</label>
+                        <input type="radio" class="btn-check" name="highlights_s" id="plus_h_s" autocomplete="off"
+                            onclick=updateHighlights_s("ever");>
+                        <label class="btn btn-outline-primary btn-sm" for="plus_h_s">depuis toujours</label>
+                    </div>
+
+                    <div>
+                            <div id="longest_asc" style="font-size:small; margin-top:  0.6rem "></div>
+                            <script>
+                                displayMaxAscensions(ascensions_distance,ascensions_elevation,ascensions_labels,ascensions_moving_time,ascensions_name,ascensions_activities_id)
+                            </script> 
+                    </div>
+
+
+                </div>
+                <script>
+                    updateTrend("week")
+                    updateHighlights("year");
+                </script>
             </div>
         </div>
     </div> <!-- end 2nd row-->
@@ -845,6 +1188,8 @@
         f_gear_distance = []
 
         f_ascensions_distance = []
+        f_ascensions_name = []
+        
         f_ascensions_moving_time = []
         f_ascensions_elevation = []
 
@@ -871,11 +1216,14 @@
             var d = Date.parse(ascensions_labels[i])
             if (d >= dateo && d <= datef) {
                 f_ascensions_distance.push(ascensions_distance[i])
+                f_ascensions_name.push(ascensions_name[i])
                 f_ascensions_moving_time.push(ascensions_moving_time[i])
                 f_ascensions_elevation.push(ascensions_elevation[i])
             }
         }
 
+        filter_period=document.getElementById("period")
+        filter_period.innerHTML=" &nbsp;&nbsp;&nbsp;"+debd+" -> "+endd
 
         document.getElementById("distance-totale").innerText = (f_tot / 1000).toFixed(0) + " km"
         document.getElementById("elevation-total").innerText = (f_elev).toFixed(0) + " m"
@@ -949,6 +1297,7 @@
         for (var i = 0; i < metric.length; i++) {
             val = metric[i] / moving_time[i]
             if (val > max) {
+                console.log("Pat Add max is for rank "+i)
                 max = val
             }
         }
@@ -957,6 +1306,14 @@
 
     function createShortcut() {
         da = new Date()
+        month = da.getMonth() + 1
+        day = da.getDate()
+        if (day < 10) {
+            day = '0' + day;
+        }
+        if (month < 10) {
+            month = '0' + month;
+        }
         dor = 2017
         dc = document.getElementById('year_shortcut')
         var cblist = []
@@ -982,7 +1339,8 @@
                         updateDashboardInfo()
                     } else {
                         document.getElementById('start').value = ""
-                        document.getElementById('end').value = ""
+                        document.getElementById('end').value = da.getFullYear() + "-" + month + "-" + day
+                        updateDashboardInfo()
                     }
                 },
             )
@@ -997,6 +1355,8 @@
             label.style.paddingRight = "8px"
             dc.appendChild(label);
         }
+
+        document.getElementById('end').value = da.getFullYear() + "-" + month + "-" + day
     }
 
     //generate shortcut radio
@@ -1015,11 +1375,7 @@
     activities_labels = {{ activities_labels | safe }}
 
 
-    ascensions_distance = {{ ascensions_distance | safe }}
-    ascensions_moving_time = {{ ascensions_moving_time | safe }}
-    ascensions_elevation = {{ ascensions_elevation | safe }}
-    ascensions_labels = {{ ascensions_labels | safe }}
-
+  
     var tot = distance.reduce((a, b) => a + b, 0)
     var elev = elevation.reduce((a, b) => a + b, 0)
 
